@@ -22,16 +22,16 @@ Deku tries to simplify the construction of DGraph Queries and mutations with a f
 - [x] Schema Builder (Types, Predicates, Indexes)
 - [x] Filtering - Connecting Filters (AND / OR)
 - [x] Nested Selection / Filters
-- [] Functions 50%
-- [] Pagination
-- [] Aggregation
-- [] Sorting
-- [] GroupBy
-- [] Multiple Query Block
-- [] Query Variables
-- [] Values Variables
-- [] Facets
-- [] Mutations
+- [ ] Functions 50%
+- [ ] Pagination
+- [ ] Aggregation
+- [ ] Sorting
+- [ ] GroupBy
+- [ ] Multiple Query Block
+- [ ] Query Variables
+- [ ] Values Variables
+- [ ] Facets
+- [ ] Mutations
 
 ### Licence
 MIT
