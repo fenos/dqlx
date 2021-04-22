@@ -1,8 +1,9 @@
-Deku
+# Deku
 ---
 
 Deku is a [DGraph](https://github.com/dgraph-io/dgraph) query builder 🦸 </br>
 Compose fluently complex and dynamic DGraph queries & mutation!
+
 ---
 
 ### Status
