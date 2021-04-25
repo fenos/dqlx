@@ -5,15 +5,16 @@ import (
 )
 
 type QueryBuilder struct {
-	edge      edge
+	rootEdge  edge
 	selection selectionSet
 	edges     map[string][]QueryBuilder
 	filters   []DQLizer
+	variables []QueryBuilder
 }
 
 func Query(name string, rootQueryFn FilterFn) QueryBuilder {
 	builder := QueryBuilder{
-		edge: edge{
+		rootEdge: edge{
 			Name:   name,
 			IsRoot: true,
 			Filters: []DQLizer{
@@ -27,33 +28,31 @@ func Query(name string, rootQueryFn FilterFn) QueryBuilder {
 }
 
 func (builder QueryBuilder) ToDQL() (query string, args map[string]interface{}, err error) {
-	grammar := queryGrammar{
-		RootEdge:  builder.edge,
-		Filters:   builder.filters,
-		Selection: builder.selection,
-	}
+	grammar := builder.toGrammar()
 
-	return grammar.ToQuery(builder.edge.Name)
+	operation := rootOperation{
+		operations: []queryGrammar{grammar},
+	}
+	return operation.ToQuery()
 }
 
-func (builder QueryBuilder) toDql() (query string, args []interface{}, err error) {
-	grammar := queryGrammar{
-		RootEdge:  builder.edge,
-		Filters:   builder.filters,
-		Selection: builder.selection,
-	}
-
-	return grammar.ToDQL()
+func (builder QueryBuilder) toDQL() (query string, args []interface{}, err error) {
+	return builder.toGrammar().ToDQL()
 }
 
-//func (builder *QueryBuilder) MergeEdge(edgeQuery QueryBuilder) *QueryBuilder {
-//	edgeQuery.isRoot = false
-//	edgeQuery.depth = builder.depth + 1
-//
-//	//builder.selection.Edges = append(builder.selection.Edges, edgeQuery)
-//
-//	return builder
-//}
+func (builder QueryBuilder) toGrammar() queryGrammar {
+	return queryGrammar{
+		RootEdge:  builder.rootEdge,
+		Filters:   builder.filters,
+		Selection: builder.selection,
+		Variables: builder.variables,
+	}
+}
+
+func (builder QueryBuilder) Variable(queryBuilder QueryBuilder) QueryBuilder {
+	builder.variables = append(builder.variables, queryBuilder)
+	return builder
+}
 
 func (builder QueryBuilder) Fields(fields ...string) QueryBuilder {
 	if len(fields) == 1 {
@@ -62,12 +61,9 @@ func (builder QueryBuilder) Fields(fields ...string) QueryBuilder {
 	}
 
 	selectionSet := selectionSet{
-		Parent: builder.edge,
+		Parent: builder.rootEdge,
 		Edges:  builder.edges,
-	}
-
-	for _, fieldName := range fields {
-		selectionSet.Fields = append(selectionSet.Fields, fieldName)
+		Fields: fields,
 	}
 
 	builder.selection = selectionSet
@@ -83,7 +79,7 @@ func (builder QueryBuilder) Filter(filters ...DQLizer) QueryBuilder {
 }
 
 func (builder QueryBuilder) Paginate(pagination Pagination) QueryBuilder {
-	builder.edge.Pagination = pagination
+	builder.rootEdge.Pagination = pagination
 	return builder
 }
 
@@ -101,7 +97,7 @@ func (builder QueryBuilder) EdgeFn(fullPath string, fn func(builder QueryBuilder
 	}
 
 	edgeBuilder := QueryBuilder{
-		edge: edge{
+		rootEdge: edge{
 			Name:   fullPath,
 			IsRoot: false,
 		},
@@ -111,7 +107,7 @@ func (builder QueryBuilder) EdgeFn(fullPath string, fn func(builder QueryBuilder
 	parentPath := fullPath
 
 	if len(edgePathParts) == 1 {
-		parentPath = builder.edge.Name
+		parentPath = builder.rootEdge.Name
 	} else {
 		parents := edgePathParts[0 : len(edgePathParts)-1]
 		parentPath = strings.Join(parents, "->")

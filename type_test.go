@@ -220,7 +220,7 @@ func TestTypeBuilder_Fields(t *testing.T) {
 
 	// TODO: geo indexes
 
-	t.Run("can't register multiple fields with the same name", func(t *testing.T) {
+	t.Run("can't register multiple QueryFields with the same name", func(t *testing.T) {
 		actor := dql.NewTypeBuilder("Actor")
 		actor.String("name")
 		actor.String("name")
@@ -229,7 +229,7 @@ func TestTypeBuilder_Fields(t *testing.T) {
 		require.Error(t, err, "field 'Actor.name' already registered on type 'Actor'")
 	})
 
-	t.Run("can't register multiple fields with the same name", func(t *testing.T) {
+	t.Run("can't register multiple QueryFields with the same name", func(t *testing.T) {
 		actor := dql.NewTypeBuilder("Actor", dql.WithTypePrefix(false))
 		actor.String("name")
 

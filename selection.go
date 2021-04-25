@@ -29,7 +29,7 @@ func (selection selectionSet) ToDQL() (query string, args []interface{}, err err
 	}
 
 	for _, edge := range nestedEdges {
-		nestedEdge, edgesArgs, err := edge.toDql()
+		nestedEdge, edgesArgs, err := edge.toDQL()
 		args = append(args, edgesArgs...)
 
 		if err != nil {
@@ -39,4 +39,8 @@ func (selection selectionSet) ToDQL() (query string, args []interface{}, err err
 	}
 
 	return writer.String(), args, nil
+}
+
+func Fields(fields string) []string {
+	return strings.Fields(fields)
 }

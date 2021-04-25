@@ -151,7 +151,7 @@ func (builder *DGraphType) ToString() (string, error) {
 	writer := bytes.Buffer{}
 	writer.WriteString("type " + builder.Name + " {")
 
-	// make sure duplicate fields are not allowed
+	// make sure duplicate QueryFields are not allowed
 	registeredPredicates := map[string]bool{}
 
 	for _, field := range builder.predicates {

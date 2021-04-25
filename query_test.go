@@ -311,3 +311,51 @@ func Test_Query_Pagination(t *testing.T) {
 
 	require.Equal(t, expected, query)
 }
+
+func Test_Query_Variable(t *testing.T) {
+	t.Skipf("Working progress")
+	variable := dql.Variable(dql.EqFn("name", "test")).
+		Edge("film", nil).
+		Edge("film->performance", dql.Fields(`
+			 D AS genre
+		`))
+
+	query, variables, err := dql.
+		Query("bladerunner", dql.EqFn("item", "value")).
+		Fields(`
+			uid
+			name
+			initial_release_date
+			netflix_id
+		`).
+		Variable(variable).
+		Filter(dql.Eq{"field1": dql.Var("D")}).
+		ToDQL()
+
+	require.NoError(t, err)
+	require.Equal(t, map[string]interface{}{
+		"$0": "test",
+		"$1": "value",
+	}, variables)
+
+	expected := dql.Minify(`
+		query Bladerunner($0:string, $1:string) {
+			var(func:eq(name, $1)) {
+				film {
+					performance {
+					 D As genre
+					}
+				}
+			}
+
+			bladerunner(func: eq(item,$0)) @filter(eq(field1,D)) {
+				uid
+				name
+				initial_release_date
+				netflix_id
+			}
+		}
+	`)
+
+	require.Equal(t, expected, query)
+}

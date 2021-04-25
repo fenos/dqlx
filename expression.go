@@ -46,7 +46,6 @@ type QueryFunction struct {
 var placeholderSymbol = "??"
 
 func (queryFunction QueryFunction) ToDQL() (query string, args []interface{}, err error) {
-
 	placeholder := placeholderSymbol
 
 	if isListType(queryFunction.value) {
@@ -63,6 +62,8 @@ func (queryFunction QueryFunction) ToDQL() (query string, args []interface{}, er
 		}
 
 		placeholder = fmt.Sprintf("[%s]", strings.Join(placeholders, ","))
+	} else if varRef, ok := queryFunction.value.(varRef); ok {
+		placeholder = string(varRef)
 	} else {
 		args = append(args, queryFunction.value)
 	}
@@ -134,10 +135,6 @@ func (expression mapExpression) toDQL(operator QueryFn) (query string, args []in
 	}
 
 	return strings.Join(expressions, ", "), args, nil
-}
-
-func Fields(fields string) []string {
-	return strings.Fields(fields)
 }
 
 // Eq eq expression eq(field, value)
@@ -319,6 +316,12 @@ func (p Pagination) ToDQL() (query string, args []interface{}, err error) {
 	}
 
 	return strings.Join(paginationExpressions, ","), args, nil
+}
+
+type varRef string
+
+func Var(ref string) varRef {
+	return varRef(ref)
 }
 
 //alloftermsOperator QueryFn = "allofterms" // DONE
