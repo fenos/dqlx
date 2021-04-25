@@ -1,59 +1,55 @@
 package deku
 
-import "fmt"
-
-type DGraphType struct {
-	Name       string
-	predicates []*DGraphPredicate
-}
-
-func (builder *DGraphType) ToString() string {
-	writer := NewWriter()
-	writer.AddLine("type " + builder.Name + " {")
-
-	for _, field := range builder.predicates {
-
-		if field.reverse {
-			writer.AddIndentedLine("<~" + field.name + ">")
-		} else {
-			writer.AddIndentedLine(field.name)
-		}
-	}
-
-	writer.AddLine("}")
-
-	return writer.ToString()
-}
+import (
+	"bytes"
+	"fmt"
+	"strings"
+)
 
 type TypeBuilder struct {
 	*DGraphType
-	schema *SchemaBuilder
 	prefixFields bool
+	schema       *SchemaBuilder
+}
+
+func NewTypeBuilder(name string, options ...TypeBuilderOptionModifier) *TypeBuilder {
+	builder := &TypeBuilder{
+		DGraphType: &DGraphType{
+			Name:       name,
+			predicates: nil,
+		},
+		prefixFields: true,
+	}
+
+	for _, option := range options {
+		option(builder)
+	}
+
+	return builder
 }
 
 type TypeBuilderOptionModifier = func(*TypeBuilder)
 
-func WithPrefix(usePrefix bool) TypeBuilderOptionModifier {
+func WithTypePrefix(usePrefix bool) TypeBuilderOptionModifier {
 	return func(builder *TypeBuilder) {
 		builder.prefixFields = usePrefix
 	}
 }
 
-func (builder *TypeBuilder) String(name string) *PredicateStringBuilder {
+func (builder *TypeBuilder) String(name string) PredicateStringBuilder {
 	name = builder.normalizeName(name)
 
-	field := &PredicateStringBuilder{
-		PredicateBuilder: &PredicateBuilder{
+	field := PredicateStringBuilder{
+		PredicateBuilder: PredicateBuilder{
 			predicate: &DGraphPredicate{
 				name:       name,
 				tokenizers: nil,
 				scalarType: ScalarString,
 			},
-			TypeBuilder: builder,
 		},
 	}
 
-	builder.registerPredicate(name, field.PredicateBuilder.predicate)
+	builder.registerPredicate(field.PredicateBuilder.predicate)
 
 	return field
 }
@@ -68,13 +64,17 @@ func (builder *TypeBuilder) DateTime(name string) *PredicateDateBuilder {
 				tokenizers: nil,
 				scalarType: ScalarDateTime,
 			},
-			TypeBuilder: builder,
 		},
 	}
 
-	builder.registerPredicate(name, field.PredicateBuilder.predicate)
+	builder.registerPredicate(field.PredicateBuilder.predicate)
 
 	return field
+}
+
+func (builder *TypeBuilder) Type(kind string, name string) *PredicateBuilder {
+	castKind := DGraphScalar(kind)
+	return builder.field(name, castKind)
 }
 
 func (builder *TypeBuilder) UID(name string) *PredicateBuilder {
@@ -110,10 +110,9 @@ func (builder *TypeBuilder) field(name string, scalar DGraphScalar) *PredicateBu
 			tokenizers: nil,
 			scalarType: scalar,
 		},
-		TypeBuilder: builder,
 	}
 
-	builder.registerPredicate(name, field.predicate)
+	builder.registerPredicate(field.predicate)
 
 	return field
 }
@@ -135,14 +134,51 @@ func (builder *TypeBuilder) normalizeName(name string) string {
 	return name
 }
 
-func (builder *TypeBuilder) registerPredicate(name string, field *DGraphPredicate) {
-	if builder.HasPredicate(name) {
-		panic(fmt.Errorf("predicate '%s' already registered on type '%s'", name, builder.Name))
+func (builder *TypeBuilder) registerPredicate(predicate *DGraphPredicate) {
+	if builder.schema != nil {
+		builder.schema.predicates = append(builder.schema.predicates, predicate)
 	}
 
-	if !builder.schema.HasPredicate(name) {
-		builder.schema.predicates = append(builder.schema.predicates, field)
+	builder.predicates = append(builder.predicates, predicate)
+}
+
+type DGraphType struct {
+	Name       string
+	predicates []*DGraphPredicate
+}
+
+func (builder *DGraphType) ToString() (string, error) {
+	writer := bytes.Buffer{}
+	writer.WriteString("type " + builder.Name + " {")
+
+	// make sure duplicate fields are not allowed
+	registeredPredicates := map[string]bool{}
+
+	for _, field := range builder.predicates {
+
+		if _, ok := registeredPredicates[field.name]; ok {
+			return "", fmt.Errorf("field '%s' already registered on type '%s'", field.name, builder.Name)
+		}
+
+		writer.WriteString(" " + field.name + "")
+
+		registeredPredicates[field.name] = true
 	}
 
-	builder.predicates = append(builder.predicates, field)
+	writer.WriteString(" }")
+
+	return writer.String(), nil
+}
+
+func (builder *DGraphType) PredicatesToString() string {
+	writer := bytes.Buffer{}
+
+	var parts []string
+	for _, field := range builder.predicates {
+		parts = append(parts, field.ToString())
+	}
+
+	writer.WriteString(strings.Join(parts, " "))
+
+	return writer.String()
 }

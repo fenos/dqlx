@@ -1,7 +1,9 @@
 package deku
 
 import (
+	"bytes"
 	"fmt"
+	"strings"
 )
 
 type SchemaBuilder struct {
@@ -16,34 +18,72 @@ func NewSchema() *SchemaBuilder {
 	}
 }
 
-func (schema *SchemaBuilder) ToString() string {
-	writer := NewWriter()
+func (schema *SchemaBuilder) ToDQL() (string, error) {
+	writer := bytes.Buffer{}
 
-	predicates := schema.PredicatesToString()
-	types := schema.TypesToString()
+	predicates, err := schema.PredicatesToString()
 
-	writer.AddLine(predicates)
-	writer.Append(types)
+	if err != nil {
+		return "", err
+	}
 
-	return writer.ToString()
+	types, err := schema.TypesToString()
+
+	if err != nil {
+		return "", err
+	}
+
+	writer.WriteString(predicates)
+
+	if types != "" {
+		writer.WriteString(" ")
+		writer.WriteString(types)
+	}
+
+	return writer.String(), nil
 }
 
-func (schema *SchemaBuilder) PredicatesToString() string {
-	writer := NewWriter()
+func (schema *SchemaBuilder) PredicatesToString() (string, error) {
+	writer := bytes.Buffer{}
+
+	registeredPredicates := map[string]*DGraphPredicate{}
+
+	var predicates []string
 	for _, predicate := range schema.predicates {
-		writer.AddLine(predicate.ToString())
+
+		if registeredPredicate, ok := registeredPredicates[predicate.name]; ok {
+			if registeredPredicate.scalarType != predicate.scalarType {
+				return "", fmt.Errorf("predicate '%s' already registered with a different scalar type '%s'", predicate.name, registeredPredicate.scalarType)
+			}
+			continue
+		}
+
+		predicates = append(predicates, predicate.ToString())
+
+		registeredPredicates[predicate.name] = predicate
 	}
 
-	return writer.ToString()
+	writer.WriteString(strings.Join(predicates, " "))
+	return writer.String(), nil
 }
 
-func (schema *SchemaBuilder) TypesToString() string {
-	writer := NewWriter()
-	for _, dType := range schema.types {
-		writer.AddLine(dType.ToString())
+func (schema *SchemaBuilder) TypesToString() (string, error) {
+	writer := bytes.Buffer{}
+
+	types := make([]string, len(schema.types))
+	for index, dType := range schema.types {
+		dqlExpression, err := dType.ToString()
+
+		if err != nil {
+			return "", err
+		}
+
+		types[index] = dqlExpression
 	}
 
-	return writer.ToString()
+	writer.WriteString(strings.Join(types, " "))
+
+	return writer.String(), nil
 }
 
 func (schema *SchemaBuilder) HasType(name string) bool {
@@ -71,11 +111,11 @@ func (schema *SchemaBuilder) Type(name string, options ...TypeBuilderOptionModif
 
 	builder := &TypeBuilder{
 		prefixFields: true,
-		schema: schema,
 		DGraphType: &DGraphType{
 			Name:       name,
 			predicates: nil,
 		},
+		schema: schema,
 	}
 
 	for _, modifier := range options {
@@ -83,6 +123,19 @@ func (schema *SchemaBuilder) Type(name string, options ...TypeBuilderOptionModif
 	}
 
 	schema.types = append(schema.types, builder.DGraphType)
+
+	return builder
+}
+
+func (schema *SchemaBuilder) Predicate(name string, scalar DGraphScalar) *PredicateBuilder {
+	builder := &PredicateBuilder{
+		predicate: &DGraphPredicate{
+			name:       name,
+			scalarType: scalar,
+		},
+	}
+
+	schema.predicates = append(schema.predicates, builder.predicate)
 
 	return builder
 }

@@ -1,8 +1,10 @@
 package deku
 
-import "strings"
+import (
+	"strings"
+)
 
-type DGraphScalar = string
+type DGraphScalar string
 
 var (
 	ScalarDefault  DGraphScalar = "string"
@@ -10,14 +12,14 @@ var (
 	ScalarFloat    DGraphScalar = "float"
 	ScalarString   DGraphScalar = "string"
 	ScalarBool     DGraphScalar = "bool"
-	ScalarDateTime DGraphScalar = "dateTime"
+	ScalarDateTime DGraphScalar = "datetime"
 	ScalarGeo      DGraphScalar = "geo"
 	ScalarPassword DGraphScalar = "password"
 	ScalarUID      DGraphScalar = "uid"
 )
 
-type StringIndexTokenizer = string
-type DateIndexTokenizer = string
+type StringIndexTokenizer string
+type DateIndexTokenizer string
 
 var (
 	TokenixerExact    StringIndexTokenizer = "exact"
@@ -47,9 +49,9 @@ func (builder *DGraphPredicate) ToString() string {
 	predicateString := builder.name + ":"
 
 	if builder.list {
-		predicateString += "[" + builder.scalarType + "] "
+		predicateString += "[" + string(builder.scalarType) + "] "
 	} else {
-		predicateString += builder.scalarType + " "
+		predicateString += string(builder.scalarType) + " "
 	}
 
 	if builder.index {
@@ -61,7 +63,7 @@ func (builder *DGraphPredicate) ToString() string {
 	}
 
 	if builder.upsert {
-		predicateString += "@upsert() "
+		predicateString += "@upsert "
 	}
 
 	if builder.lang {
@@ -69,7 +71,7 @@ func (builder *DGraphPredicate) ToString() string {
 	}
 
 	if builder.reverse {
-		predicateString += "@reverse() "
+		predicateString += "@reverse "
 	}
 
 	predicateString += "."
@@ -79,7 +81,6 @@ func (builder *DGraphPredicate) ToString() string {
 
 type PredicateBuilder struct {
 	predicate *DGraphPredicate
-	*TypeBuilder
 }
 
 func (builder *PredicateBuilder) Index() *PredicateBuilder {
@@ -108,12 +109,12 @@ func (builder *PredicateBuilder) Reverse() *PredicateBuilder {
 }
 
 type PredicateStringBuilder struct {
-	*PredicateBuilder
+	PredicateBuilder
 }
 
 func (builder *PredicateStringBuilder) HasIndex(tokenizer StringIndexTokenizer) bool {
 	for _, token := range builder.predicate.tokenizers {
-		if tokenizer == token {
+		if string(tokenizer) == token {
 			return true
 		}
 	}
@@ -125,7 +126,7 @@ func (builder *PredicateStringBuilder) Index(tokenizer StringIndexTokenizer) *Pr
 	builder.predicate.index = true
 
 	if !builder.HasIndex(tokenizer) {
-		builder.predicate.tokenizers = append(builder.predicate.tokenizers, tokenizer)
+		builder.predicate.tokenizers = append(builder.predicate.tokenizers, string(tokenizer))
 	}
 	return builder
 }
@@ -142,7 +143,7 @@ func (builder *PredicateStringBuilder) IndexTerm() *PredicateStringBuilder {
 	return builder.Index(TokenixerTerm)
 }
 
-func (builder *PredicateStringBuilder) IndexFulltext() *PredicateStringBuilder {
+func (builder PredicateStringBuilder) IndexFulltext() *PredicateStringBuilder {
 	return builder.Index(TokenixerFulltext)
 }
 
@@ -156,7 +157,7 @@ type PredicateDateBuilder struct {
 
 func (builder *PredicateDateBuilder) HasIndex(tokenizer DateIndexTokenizer) bool {
 	for _, token := range builder.predicate.tokenizers {
-		if tokenizer == token {
+		if string(tokenizer) == token {
 			return true
 		}
 	}
@@ -168,7 +169,7 @@ func (builder *PredicateDateBuilder) Index(tokenizer DateIndexTokenizer) *Predic
 	builder.predicate.index = true
 
 	if !builder.HasIndex(tokenizer) {
-		builder.predicate.tokenizers = append(builder.predicate.tokenizers, tokenizer)
+		builder.predicate.tokenizers = append(builder.predicate.tokenizers, string(tokenizer))
 	}
 	return builder
 }
