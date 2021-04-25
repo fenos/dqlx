@@ -6,9 +6,10 @@ import (
 )
 
 type edge struct {
-	Name    string
-	Filters []DQLizer
-	IsRoot  bool
+	Name       string
+	Filters    []DQLizer
+	Pagination Pagination
+	IsRoot     bool
 }
 
 func (edge edge) RelativeName() string {
@@ -37,7 +38,23 @@ func (edge edge) ToDQL() (query string, args []interface{}, err error) {
 	}
 
 	if edge.IsRoot {
+		if edge.Pagination.WantsPagination() {
+			writer.WriteString(",")
+
+			if err := addPart(edge.Pagination, &writer, &args); err != nil {
+				return "", nil, err
+			}
+		}
+
 		writer.WriteString(")")
+	} else {
+		if edge.Pagination.WantsPagination() {
+			writer.WriteString("(")
+			if err := addPart(edge.Pagination, &writer, &args); err != nil {
+				return "", nil, err
+			}
+			writer.WriteString(")")
+		}
 	}
 
 	return writer.String(), args, nil

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -289,6 +290,37 @@ func MatchFn(field string, pattern string) FilterFn {
 	}
 }
 
+type Pagination struct {
+	First  int
+	Offset int
+	After  string
+}
+
+func (p Pagination) WantsPagination() bool {
+	return p.Offset != 0 || p.First != 0 || p.After != ""
+}
+
+func (p Pagination) ToDQL() (query string, args []interface{}, err error) {
+
+	var paginationExpressions []string
+	if p.First != 0 {
+		paginationExpressions = append(paginationExpressions, "first:??")
+		args = append(args, p.First)
+	}
+
+	if p.Offset != 0 {
+		paginationExpressions = append(paginationExpressions, "offset:??")
+		args = append(args, p.Offset)
+	}
+
+	if p.After != "" {
+		paginationExpressions = append(paginationExpressions, "after:??")
+		args = append(args, p.After)
+	}
+
+	return strings.Join(paginationExpressions, ","), args, nil
+}
+
 //alloftermsOperator QueryFn = "allofterms" // DONE
 //anyoftermsOperator QueryFn = "anyofterms" // DONE
 //regexpOperator     QueryFn = "regexp" // DONE
@@ -304,6 +336,22 @@ func MatchFn(field string, pattern string) FilterFn {
 //betweenOperator    QueryFn = "between"
 //uidOperator        QueryFn = "uid"
 //uidInOperator      QueryFn = "uid_in"
+
+func getSortedVariables(exp map[string]interface{}) []string {
+	sortedKeys := make([]string, 0, len(exp))
+	for k := range exp {
+		sortedKeys = append(sortedKeys, k)
+	}
+	sort.Slice(sortedKeys, func(i, j int) bool {
+		sNumA := strings.Replace(sortedKeys[i], "$", "", 1)
+		sNumB := strings.Replace(sortedKeys[j], "$", "", 1)
+
+		numA, _ := strconv.Atoi(sNumA)
+		numB, _ := strconv.Atoi(sNumB)
+		return numA < numB
+	})
+	return sortedKeys
+}
 
 func getSortedKeys(exp map[string]interface{}) []string {
 	sortedKeys := make([]string, 0, len(exp))

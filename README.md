@@ -23,7 +23,7 @@ Deku tries to simplify the construction of DGraph Queries and mutations with a f
 - [x] Filtering - Connecting Filters (AND / OR)
 - [x] Nested Selection / Filters
 - [ ] Functions 50%
-- [ ] Pagination
+- [x] Pagination
 - [ ] Aggregation
 - [ ] Sorting
 - [ ] GroupBy

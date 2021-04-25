@@ -82,7 +82,18 @@ func (builder QueryBuilder) Filter(filters ...DQLizer) QueryBuilder {
 	return builder
 }
 
+func (builder QueryBuilder) Paginate(pagination Pagination) QueryBuilder {
+	builder.edge.Pagination = pagination
+	return builder
+}
+
 func (builder QueryBuilder) Edge(fullPath string, fields []string, filters ...DQLizer) QueryBuilder {
+	return builder.EdgeFn(fullPath, func(builder QueryBuilder) QueryBuilder {
+		return builder.Fields(fields...).Filter(filters...)
+	})
+}
+
+func (builder QueryBuilder) EdgeFn(fullPath string, fn func(builder QueryBuilder) QueryBuilder) QueryBuilder {
 	edgePathParts := strings.Split(fullPath, "->")
 
 	if len(edgePathParts) == 0 {
@@ -97,8 +108,6 @@ func (builder QueryBuilder) Edge(fullPath string, fields []string, filters ...DQ
 		edges: builder.edges,
 	}
 
-	edgeBuilder = edgeBuilder.Fields(fields...).Filter(filters...)
-
 	parentPath := fullPath
 
 	if len(edgePathParts) == 1 {
@@ -107,6 +116,8 @@ func (builder QueryBuilder) Edge(fullPath string, fields []string, filters ...DQ
 		parents := edgePathParts[0 : len(edgePathParts)-1]
 		parentPath = strings.Join(parents, "->")
 	}
+
+	edgeBuilder = fn(edgeBuilder)
 
 	builder.edges[parentPath] = append(builder.edges[parentPath], edgeBuilder)
 

@@ -227,3 +227,87 @@ func Test_Query_Connecting_Filter(t *testing.T) {
 
 	require.Equal(t, expected, query)
 }
+
+func Test_Query_Pagination(t *testing.T) {
+	query, variables, err := dql.
+		Query("bladerunner", dql.EqFn("name@en", "Blade Runner")).
+		Fields(`
+			uid
+			name
+			initial_release_date
+			netflix_id
+		`).
+		Paginate(dql.Pagination{
+			First:  20,
+			Offset: 1,
+			After:  "4567",
+		}).
+		EdgeFn("authors", func(builder dql.QueryBuilder) dql.QueryBuilder {
+			return builder.
+				Fields(`
+					uid
+					name
+					surname
+					age
+				`).
+				Paginate(dql.Pagination{
+					First:  10,
+					Offset: 2,
+					After:  "1234",
+				})
+		}).
+		EdgeFn("actors", func(builder dql.QueryBuilder) dql.QueryBuilder {
+			return builder.
+				Fields(`
+					uid
+					surname
+					age
+				`).
+				Filter(dql.Gt{"age": 30}).
+				Paginate(dql.Pagination{
+					First:  2,
+					Offset: 3,
+					After:  "45",
+				})
+		}).
+		ToDQL()
+
+	require.NoError(t, err)
+	require.Equal(t, map[string]interface{}{
+		"$0":  "Blade Runner",
+		"$1":  20,
+		"$2":  1,
+		"$3":  "4567",
+		"$4":  10,
+		"$5":  2,
+		"$6":  "1234",
+		"$7":  2,
+		"$8":  3,
+		"$9":  "45",
+		"$10": 30,
+	}, variables)
+
+	expected := dql.Minify(`
+		query Bladerunner($0:string, $1:int, $2:int, $3:string, $4:int, $5:int, $6:string, $7:int, $8:int, $9:string, $10:int) {
+			bladerunner(func: eq(name@en,$0),first:$1,offset:$2,after:$3) {
+				uid
+				name
+				initial_release_date
+				netflix_id
+				authors(first:$4,offset:$5,after:$6) {
+					uid
+					name
+					surname
+					age
+				}
+				actors(first:$7,offset:$8,after:$9) @filter(gt(age,$10))  {
+					uid
+					surname
+					age
+				}
+			}
+		}
+	`)
+
+	require.Equal(t, expected, query)
+}

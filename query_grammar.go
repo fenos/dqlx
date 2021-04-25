@@ -28,7 +28,7 @@ func (grammar queryGrammar) ToQuery(name string) (query string, variables map[st
 		return
 	}
 
-	queryPlaceholderNames := getSortedKeys(variables)
+	queryPlaceholderNames := getSortedVariables(variables)
 	placeholders := make([]string, len(queryPlaceholderNames))
 
 	for index, placeholderName := range queryPlaceholderNames {
