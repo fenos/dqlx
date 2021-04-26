@@ -73,19 +73,18 @@ func (and And) ToDQL() (query string, args []interface{}, err error) {
 }
 
 type Filter struct {
-	value DQLizer
-}
-
-type filterValue struct {
 	funcType FuncType
 	value    interface{}
 }
 
-func (filter filterValue) ToDQL() (query string, args []interface{}, err error) {
+func (filter Filter) ToDQL() (query string, args []interface{}, err error) {
 	var placeholder string
 
-	if innerFilterValue, ok := filter.value.(filterValue); ok {
-		innerFn, innerArgs, err := innerFilterValue.ToDQL()
+	switch castValue := filter.value.(type) {
+	case filterKV:
+		return castValue.toDQL(filter.funcType)
+	case Filter:
+		innerFn, innerArgs, err := castValue.ToDQL()
 
 		if err != nil {
 			return "", nil, err
@@ -93,8 +92,8 @@ func (filter filterValue) ToDQL() (query string, args []interface{}, err error) 
 
 		placeholder = innerFn
 		args = append(args, innerArgs...)
-	} else {
-		valuePlaceholder, valueArgs, err := parseValue(filter.value)
+	default:
+		valuePlaceholder, valueArgs, err := parseValue(castValue)
 
 		if err != nil {
 			return "", nil, err
@@ -109,7 +108,7 @@ func (filter filterValue) ToDQL() (query string, args []interface{}, err error) 
 
 type filterKV map[string]interface{}
 
-func (filter filterKV) ToDQL(funcType FuncType) (query string, args []interface{}, err error) {
+func (filter filterKV) toDQL(funcType FuncType) (query string, args []interface{}, err error) {
 	var expressions []string
 	sortedKeys := getSortedKeys(filter)
 
@@ -135,7 +134,10 @@ func (filter filterKV) ToDQL(funcType FuncType) (query string, args []interface{
 type Eq filterKV
 
 func (eq Eq) ToDQL() (query string, args []interface{}, err error) {
-	return filterKV(eq).ToDQL(eqFunc)
+	return Filter{
+		funcType: eqFunc,
+		value:    filterKV(eq),
+	}.ToDQL()
 }
 
 func EqFn(field string, value interface{}) FilterFn {
@@ -150,7 +152,10 @@ func EqFn(field string, value interface{}) FilterFn {
 type Le filterKV
 
 func (le Le) ToDQL() (query string, args []interface{}, err error) {
-	return filterKV(le).ToDQL(leFunc)
+	return Filter{
+		funcType: leFunc,
+		value:    filterKV(le),
+	}.ToDQL()
 }
 
 func LeFn(field string, value interface{}) FilterFn {
@@ -165,7 +170,10 @@ func LeFn(field string, value interface{}) FilterFn {
 type Lt filterKV
 
 func (lt Lt) ToDQL() (query string, args []interface{}, err error) {
-	return filterKV(lt).ToDQL(ltFunc)
+	return Filter{
+		funcType: ltFunc,
+		value:    filterKV(lt),
+	}.ToDQL()
 }
 
 func LtFn(field string, value interface{}) FilterFn {
@@ -180,7 +188,10 @@ func LtFn(field string, value interface{}) FilterFn {
 type Ge filterKV
 
 func (ge Ge) ToDQL() (query string, args []interface{}, err error) {
-	return filterKV(ge).ToDQL(geFunc)
+	return Filter{
+		funcType: geFunc,
+		value:    filterKV(ge),
+	}.ToDQL()
 }
 
 func GeFn(field string, value interface{}) FilterFn {
@@ -195,7 +206,10 @@ func GeFn(field string, value interface{}) FilterFn {
 type Gt filterKV
 
 func (gt Gt) ToDQL() (query string, args []interface{}, err error) {
-	return filterKV(gt).ToDQL(gtFunc)
+	return Filter{
+		funcType: gtFunc,
+		value:    filterKV(gt),
+	}.ToDQL()
 }
 
 func GtFn(field string, value interface{}) FilterFn {
@@ -207,17 +221,21 @@ func GtFn(field string, value interface{}) FilterFn {
 }
 
 // Has has expression has(field, value)
-type Has filterKV
+type Has Filter
 
 func (has Has) ToDQL() (query string, args []interface{}, err error) {
-	return filterKV(has).ToDQL(gtFunc)
+	return Filter{
+		funcType: hasFunc,
+		value:    has,
+	}.ToDQL()
 }
 
-func HasFn(field string, value interface{}) FilterFn {
+func HasFn(field string) FilterFn {
 	return func() DQLizer {
-		expression := Has{}
-		expression[field] = value
-		return expression
+		return Has{
+			funcType: hasFunc,
+			value:    RawVal(field),
+		}
 	}
 }
 
@@ -225,7 +243,10 @@ func HasFn(field string, value interface{}) FilterFn {
 type AllOfTerms filterKV
 
 func (allOfTerms AllOfTerms) ToDQL() (query string, args []interface{}, err error) {
-	return filterKV(allOfTerms).ToDQL(alloftermsFunc)
+	return Filter{
+		funcType: alloftermsFunc,
+		value:    filterKV(allOfTerms),
+	}.ToDQL()
 }
 
 func AllOfTermsFn(field string, value interface{}) FilterFn {
@@ -240,7 +261,10 @@ func AllOfTermsFn(field string, value interface{}) FilterFn {
 type AnyOfTerms filterKV
 
 func (anyOfTerms AnyOfTerms) ToDQL() (query string, args []interface{}, err error) {
-	return filterKV(anyOfTerms).ToDQL(anyoftermsFunc)
+	return Filter{
+		funcType: anyoftermsFunc,
+		value:    filterKV(anyOfTerms),
+	}.ToDQL()
 }
 
 func AnyOfTermsFn(field string, value interface{}) FilterFn {
@@ -255,7 +279,10 @@ func AnyOfTermsFn(field string, value interface{}) FilterFn {
 type Regexp filterKV
 
 func (regexp Regexp) ToDQL() (query string, args []interface{}, err error) {
-	return filterKV(regexp).ToDQL(regexpFunc)
+	return Filter{
+		funcType: regexpFunc,
+		value:    filterKV(regexp),
+	}.ToDQL()
 }
 
 func RegexpFn(field string, pattern string) FilterFn {
@@ -270,7 +297,10 @@ func RegexpFn(field string, pattern string) FilterFn {
 type Match filterKV
 
 func (match Match) ToDQL() (query string, args []interface{}, err error) {
-	return filterKV(match).ToDQL(matchFunc)
+	return Filter{
+		funcType: matchFunc,
+		value:    filterKV(match),
+	}.ToDQL()
 }
 
 func MatchFn(field string, pattern string) FilterFn {
@@ -292,7 +322,6 @@ func (p Pagination) WantsPagination() bool {
 }
 
 func (p Pagination) ToDQL() (query string, args []interface{}, err error) {
-
 	var paginationExpressions []string
 	if p.First != 0 {
 		paginationExpressions = append(paginationExpressions, "first:??")
@@ -324,22 +353,15 @@ func Var(ref string) RawValue {
 	return RawVal(ref)
 }
 
-func Val(ref string) filterValue {
-	return filterValue{
+func Val(ref string) Filter {
+	return Filter{
 		funcType: valFunc,
 		value:    RawVal(ref),
 	}
 }
 
-//type Val string
-//
-//func (val Val) ToDQL() (query string, args []interface{}, err error) {
-//	query = string(valFunc) + "(" + string(val) + ")"
-//	return
-//}
-
-func UID(value interface{}) filterValue {
-	return filterValue{
+func UID(value interface{}) Filter {
+	return Filter{
 		funcType: uidFunc,
 		value:    value,
 	}
@@ -364,7 +386,9 @@ func UIDFn(value interface{}) FilterFn {
 
 func parseValue(value interface{}) (valuePlaceholder string, args []interface{}, err error) {
 	if isListType(value) {
-		listValue, err := toInterfaceSlice(value)
+		var listValue []interface{}
+
+		listValue, err = toInterfaceSlice(value)
 
 		if err != nil {
 			return "", nil, err
@@ -377,10 +401,13 @@ func parseValue(value interface{}) (valuePlaceholder string, args []interface{},
 		}
 
 		valuePlaceholder = fmt.Sprintf("[%s]", strings.Join(placeholders, ","))
-	} else if varRef, ok := value.(RawValue); ok {
-		valuePlaceholder = fmt.Sprintf("%s", varRef.val)
+		return
+	}
 
-	} else {
+	switch castType := value.(type) {
+	case RawValue:
+		valuePlaceholder = fmt.Sprintf("%s", castType.val)
+	default:
 		args = append(args, value)
 		valuePlaceholder = symbolValuePlaceholder
 	}

@@ -44,11 +44,11 @@ func (grammar queryOperation) ToDQL() (query string, variables map[string]interf
 	var args []interface{}
 	var statements []string
 
-	if err := addStatement(grammar.variables, &statements, &args); err != nil {
+	if err := addOperation(grammar.variables, &statements, &args); err != nil {
 		return "", nil, err
 	}
 
-	if err := addStatement(grammar.operations, &statements, &args); err != nil {
+	if err := addOperation(grammar.operations, &statements, &args); err != nil {
 		return "", nil, err
 	}
 
@@ -123,8 +123,18 @@ func isListType(val interface{}) bool {
 	return valVal.Kind() == reflect.Array || valVal.Kind() == reflect.Slice
 }
 
-func addStatement(operations []Operation, statements *[]string, args *[]interface{}) error {
-	for _, block := range operations {
+func addOperation(operations []Operation, statements *[]string, args *[]interface{}) error {
+	parts := make([]DQLizer, len(operations))
+
+	for index, operation := range operations {
+		parts[index] = operation
+	}
+
+	return addStatement(parts, statements, args)
+}
+
+func addStatement(parts []DQLizer, statements *[]string, args *[]interface{}) error {
+	for _, block := range parts {
 		statement, queryArg, err := block.ToDQL()
 
 		if err != nil {

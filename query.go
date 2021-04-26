@@ -88,9 +88,21 @@ func (builder QueryBuilder) Paginate(pagination Pagination) QueryBuilder {
 	return builder
 }
 
-func (builder QueryBuilder) Edge(fullPath string, fields string, filters ...DQLizer) QueryBuilder {
+func (builder QueryBuilder) Edge(fullPath string, queryParts ...DQLizer) QueryBuilder {
 	return builder.EdgeFn(fullPath, func(builder QueryBuilder) QueryBuilder {
-		return builder.Fields(ParseFields(fields)...).Filter(filters...)
+		for _, part := range queryParts {
+			switch cast := part.(type) {
+			case Filter:
+				builder = builder.Filter(part)
+			case Fields:
+				builder = builder.Fields(string(cast))
+			case Pagination:
+				builder = builder.Paginate(cast)
+			case DQLizer:
+				builder = builder.Filter(cast)
+			}
+		}
+		return builder
 	})
 }
 

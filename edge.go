@@ -93,11 +93,13 @@ func (edge edge) addFilters(writer *bytes.Buffer, args *[]interface{}) error {
 	}
 
 	writer.WriteString(" @filter(")
-	for _, filter := range edge.Filters {
-		if err := addPart(filter, writer, args); err != nil {
-			return err
-		}
+
+	var statements []string
+	if err := addStatement(edge.Filters, &statements, args); err != nil {
+		return err
 	}
+
+	writer.WriteString(strings.Join(statements, ","))
 
 	writer.WriteString(")")
 	return nil

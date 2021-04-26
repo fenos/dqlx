@@ -53,6 +53,12 @@ func (selection selectionSet) ToDQL() (query string, args []interface{}, err err
 	return writer.String(), args, nil
 }
 
+type Fields string
+
+func (fields Fields) ToDQL() (query string, args []interface{}, err error) {
+	return string(fields), nil, nil
+}
+
 func FieldList(fields []string) string {
 	return strings.Join(fields, symbolEdgeTraversal)
 }
