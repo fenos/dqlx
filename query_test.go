@@ -312,18 +312,6 @@ func Test_Query_Pagination(t *testing.T) {
 	require.Equal(t, expected, query)
 }
 
-//func Test_OnlyEdges(t *testing.T) {
-//	variable := dql.Variable(dql.EqFn("name", "test")).
-//		Edge("film", nil).
-//		Edge("film->performance", dql.ParseFields(`
-//			 D AS genre
-//		`))
-//
-//	query, _, err := variable.ToDQL()
-//	require.NoError(t, err)
-//	require.Equal(t, "", query)
-//}
-
 func Test_Query_Variable(t *testing.T) {
 	variable := dql.Variable(dql.EqFn("name", "test")).
 		Edge("film", "").
@@ -368,5 +356,47 @@ func Test_Query_Variable(t *testing.T) {
 		}
 	`)
 
+	require.Equal(t, expected, query)
+}
+
+func Test_Query_Value_Variable(t *testing.T) {
+	variable := dql.Variable(dql.EqFn("name", "test")).
+		Edge("film", "").
+		Edge("film->performance", `
+			 D AS genre
+		`)
+
+	query, _, err := dql.
+		Query("bladerunner", dql.EqFn("item", "value")).
+		Fields(`
+			uid
+			name
+			initial_release_date
+			netflix_id
+		`).
+		Filter(dql.UID(dql.Val("D"))).
+		Variable(variable).
+		ToDQL()
+
+	expected := dql.Minify(`
+		query Bladerunner($0:string, $1:string) {
+			var(func: eq(name,$0)) {
+				film {
+					performance { 
+						D AS genre
+					}
+				}
+			}
+
+			bladerunner(func: eq(item,$1)) @filter(uid(val(D))) {
+				uid
+				name
+				initial_release_date
+				netflix_id
+			}
+		}
+	`)
+
+	require.NoError(t, err)
 	require.Equal(t, expected, query)
 }

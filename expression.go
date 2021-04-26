@@ -31,45 +31,11 @@ var (
 	valFunc        FuncType = "val"
 	sumFunc        FuncType = "sum"
 	betweenFunc    FuncType = "between"
-	uidFunc        FuncType = "uid"
+	uidFunc        FuncType = "uid" // Done
 	uid            FuncType = "uid_in"
 )
 
 type FilterFn = func() DQLizer
-
-type QueryFunction struct {
-	funcType FuncType
-	field    string
-	value    interface{}
-}
-
-func (queryFunction QueryFunction) ToDQL() (query string, args []interface{}, err error) {
-	placeholder := symbolValuePlaceholder
-
-	if isListType(queryFunction.value) {
-		listValue, err := toInterfaceSlice(queryFunction.value)
-
-		if err != nil {
-			return "", nil, err
-		}
-
-		placeholders := make([]string, len(listValue))
-		for index, value := range listValue {
-			placeholders[index] = symbolValuePlaceholder
-			args = append(args, value)
-		}
-
-		placeholder = fmt.Sprintf("[%s]", strings.Join(placeholders, ","))
-	} else if varRef, ok := queryFunction.value.(RawValue); ok {
-		placeholder = fmt.Sprintf("%s", varRef.val)
-	} else {
-		args = append(args, queryFunction.value)
-	}
-
-	query = fmt.Sprintf("%s(%s,%s)", queryFunction.funcType, queryFunction.field, placeholder)
-
-	return query, args, nil
-}
 
 type connector []DQLizer
 
@@ -106,29 +72,59 @@ func (and And) ToDQL() (query string, args []interface{}, err error) {
 	return connector(and).join(" AND ")
 }
 
-type filterMap map[string]interface{}
+type Filter struct {
+	value DQLizer
+}
 
-func (expression filterMap) toDQL(funcType FuncType) (query string, args []interface{}, err error) {
-	var expressions []string
-	sortedKeys := getSortedKeys(expression)
+type filterValue struct {
+	funcType FuncType
+	value    interface{}
+}
 
-	for _, key := range sortedKeys {
-		value := expression[key]
+func (filter filterValue) ToDQL() (query string, args []interface{}, err error) {
+	var placeholder string
 
-		queryFn := QueryFunction{
-			funcType: funcType,
-			field:    key,
-			value:    value,
-		}
-
-		fnStatement, fnArgs, err := queryFn.ToDQL()
+	if innerFilterValue, ok := filter.value.(filterValue); ok {
+		innerFn, innerArgs, err := innerFilterValue.ToDQL()
 
 		if err != nil {
 			return "", nil, err
 		}
 
-		expressions = append(expressions, fnStatement)
+		placeholder = innerFn
+		args = append(args, innerArgs...)
+	} else {
+		valuePlaceholder, valueArgs, err := parseValue(filter.value)
 
+		if err != nil {
+			return "", nil, err
+		}
+
+		placeholder = valuePlaceholder
+		args = append(args, valueArgs)
+	}
+
+	return fmt.Sprintf("%s(%s)", filter.funcType, placeholder), args, nil
+}
+
+type filterKV map[string]interface{}
+
+func (filter filterKV) ToDQL(funcType FuncType) (query string, args []interface{}, err error) {
+	var expressions []string
+	sortedKeys := getSortedKeys(filter)
+
+	for _, key := range sortedKeys {
+		value := filter[key]
+
+		placeholder, fnArgs, err := parseValue(value)
+
+		if err != nil {
+			return "", nil, err
+		}
+
+		fnStatement := fmt.Sprintf("%s(%s,%s)", funcType, key, placeholder)
+
+		expressions = append(expressions, fnStatement)
 		args = append(args, fnArgs...)
 	}
 
@@ -136,10 +132,10 @@ func (expression filterMap) toDQL(funcType FuncType) (query string, args []inter
 }
 
 // Eq eq expression eq(field, value)
-type Eq filterMap
+type Eq filterKV
 
 func (eq Eq) ToDQL() (query string, args []interface{}, err error) {
-	return filterMap(eq).toDQL(eqFunc)
+	return filterKV(eq).ToDQL(eqFunc)
 }
 
 func EqFn(field string, value interface{}) FilterFn {
@@ -151,10 +147,10 @@ func EqFn(field string, value interface{}) FilterFn {
 }
 
 // Le le expression le(field, value)
-type Le filterMap
+type Le filterKV
 
 func (le Le) ToDQL() (query string, args []interface{}, err error) {
-	return filterMap(le).toDQL(leFunc)
+	return filterKV(le).ToDQL(leFunc)
 }
 
 func LeFn(field string, value interface{}) FilterFn {
@@ -166,10 +162,10 @@ func LeFn(field string, value interface{}) FilterFn {
 }
 
 // Lt lt expression lt(field, value)
-type Lt filterMap
+type Lt filterKV
 
 func (lt Lt) ToDQL() (query string, args []interface{}, err error) {
-	return filterMap(lt).toDQL(ltFunc)
+	return filterKV(lt).ToDQL(ltFunc)
 }
 
 func LtFn(field string, value interface{}) FilterFn {
@@ -181,10 +177,10 @@ func LtFn(field string, value interface{}) FilterFn {
 }
 
 // Ge ge expression ge(field, value)
-type Ge filterMap
+type Ge filterKV
 
 func (ge Ge) ToDQL() (query string, args []interface{}, err error) {
-	return filterMap(ge).toDQL(geFunc)
+	return filterKV(ge).ToDQL(geFunc)
 }
 
 func GeFn(field string, value interface{}) FilterFn {
@@ -196,10 +192,10 @@ func GeFn(field string, value interface{}) FilterFn {
 }
 
 // Gt gt expression gt(field, value)
-type Gt filterMap
+type Gt filterKV
 
 func (gt Gt) ToDQL() (query string, args []interface{}, err error) {
-	return filterMap(gt).toDQL(gtFunc)
+	return filterKV(gt).ToDQL(gtFunc)
 }
 
 func GtFn(field string, value interface{}) FilterFn {
@@ -211,10 +207,10 @@ func GtFn(field string, value interface{}) FilterFn {
 }
 
 // Has has expression has(field, value)
-type Has filterMap
+type Has filterKV
 
 func (has Has) ToDQL() (query string, args []interface{}, err error) {
-	return filterMap(has).toDQL(gtFunc)
+	return filterKV(has).ToDQL(gtFunc)
 }
 
 func HasFn(field string, value interface{}) FilterFn {
@@ -226,10 +222,10 @@ func HasFn(field string, value interface{}) FilterFn {
 }
 
 // AllOfTerms allofterms expression allofterms(field, value)
-type AllOfTerms filterMap
+type AllOfTerms filterKV
 
 func (allOfTerms AllOfTerms) ToDQL() (query string, args []interface{}, err error) {
-	return filterMap(allOfTerms).toDQL(alloftermsFunc)
+	return filterKV(allOfTerms).ToDQL(alloftermsFunc)
 }
 
 func AllOfTermsFn(field string, value interface{}) FilterFn {
@@ -241,10 +237,10 @@ func AllOfTermsFn(field string, value interface{}) FilterFn {
 }
 
 // AnyOfTerms anyofterms expression anyofterms(field, value)
-type AnyOfTerms filterMap
+type AnyOfTerms filterKV
 
 func (anyOfTerms AnyOfTerms) ToDQL() (query string, args []interface{}, err error) {
-	return filterMap(anyOfTerms).toDQL(anyoftermsFunc)
+	return filterKV(anyOfTerms).ToDQL(anyoftermsFunc)
 }
 
 func AnyOfTermsFn(field string, value interface{}) FilterFn {
@@ -256,10 +252,10 @@ func AnyOfTermsFn(field string, value interface{}) FilterFn {
 }
 
 // Regexp regexp expression regexp(field, /pattern/)
-type Regexp filterMap
+type Regexp filterKV
 
 func (regexp Regexp) ToDQL() (query string, args []interface{}, err error) {
-	return filterMap(regexp).toDQL(regexpFunc)
+	return filterKV(regexp).ToDQL(regexpFunc)
 }
 
 func RegexpFn(field string, pattern string) FilterFn {
@@ -271,10 +267,10 @@ func RegexpFn(field string, pattern string) FilterFn {
 }
 
 // Match match expression match(field, /pattern/)
-type Match filterMap
+type Match filterKV
 
 func (match Match) ToDQL() (query string, args []interface{}, err error) {
-	return filterMap(match).toDQL(matchFunc)
+	return filterKV(match).ToDQL(matchFunc)
 }
 
 func MatchFn(field string, pattern string) FilterFn {
@@ -328,17 +324,69 @@ func Var(ref string) RawValue {
 	return RawVal(ref)
 }
 
+func Val(ref string) filterValue {
+	return filterValue{
+		funcType: valFunc,
+		value:    RawVal(ref),
+	}
+}
+
+//type Val string
+//
+//func (val Val) ToDQL() (query string, args []interface{}, err error) {
+//	query = string(valFunc) + "(" + string(val) + ")"
+//	return
+//}
+
+func UID(value interface{}) filterValue {
+	return filterValue{
+		funcType: uidFunc,
+		value:    value,
+	}
+}
+
+func UIDFn(value interface{}) FilterFn {
+	return func() DQLizer {
+		return UID(value)
+	}
+}
+
 //alloftextFunc  FuncType = "alloftext"
 //anyoftextFunc  FuncType = "anyoftext"
 //countFunc      FuncType = "count"
 //exactFunc      FuncType = "exact"
 //termFunc       FuncType = "term"
 //fulltextFunc   FuncType = "fulltext"
-//valFunc        FuncType = "val"
 //sumFunc        FuncType = "sum"
 //betweenFunc    FuncType = "between"
 //uidFunc        FuncType = "uid"
 //uid      FuncType = "uid_in"
+
+func parseValue(value interface{}) (valuePlaceholder string, args []interface{}, err error) {
+	if isListType(value) {
+		listValue, err := toInterfaceSlice(value)
+
+		if err != nil {
+			return "", nil, err
+		}
+
+		placeholders := make([]string, len(listValue))
+		for index, value := range listValue {
+			placeholders[index] = symbolValuePlaceholder
+			args = append(args, value)
+		}
+
+		valuePlaceholder = fmt.Sprintf("[%s]", strings.Join(placeholders, ","))
+	} else if varRef, ok := value.(RawValue); ok {
+		valuePlaceholder = fmt.Sprintf("%s", varRef.val)
+
+	} else {
+		args = append(args, value)
+		valuePlaceholder = symbolValuePlaceholder
+	}
+
+	return
+}
 
 func getSortedVariables(exp map[string]interface{}) []string {
 	sortedKeys := make([]string, 0, len(exp))

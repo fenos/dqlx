@@ -29,7 +29,7 @@ Deku tries to simplify the construction of DGraph Queries and mutations with a f
 - [ ] GroupBy
 - [x] Multiple Query Block
 - [x] Query Variables
-- [ ] Values Variables
+- [x] Values Variables
 - [ ] Facets
 - [ ] Mutations
 
