@@ -64,7 +64,7 @@ func (grammar queryOperation) ToDQL() (query string, variables map[string]interf
 	placeholders := make([]string, len(queryPlaceholderNames))
 
 	for index, placeholderName := range queryPlaceholderNames {
-		placeholders[index] = fmt.Sprintf("%s:%s", placeholderName, goTypeToDQLType(variables[placeholderName]))
+		placeholders[index] = fmt.Sprintf("$%s:%s", placeholderName, goTypeToDQLType(variables[placeholderName]))
 	}
 
 	writer := bytes.Buffer{}
@@ -104,8 +104,8 @@ func replacePlaceholders(query string, args []interface{}) (string, map[string]i
 		}
 
 		buf.WriteString(query[:p])
-		key := fmt.Sprintf("$%d", i)
-		buf.WriteString(key)
+		key := fmt.Sprintf("%d", i)
+		buf.WriteString("$" + key)
 		query = query[p+2:]
 
 		// Assign the variables

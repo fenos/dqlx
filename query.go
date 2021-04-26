@@ -109,6 +109,13 @@ func (builder QueryBuilder) Paginate(pagination Pagination) QueryBuilder {
 	return builder
 }
 
+func (builder QueryBuilder) GroupBy(fields ...string) QueryBuilder {
+	for _, field := range fields {
+		builder.rootEdge.Group = append(builder.rootEdge.Group, GroupBy(field))
+	}
+	return builder
+}
+
 func (builder QueryBuilder) Edge(fullPath string, queryParts ...DQLizer) QueryBuilder {
 	return builder.EdgeFn(fullPath, func(builder QueryBuilder) QueryBuilder {
 		for _, part := range queryParts {
@@ -121,6 +128,8 @@ func (builder QueryBuilder) Edge(fullPath string, queryParts ...DQLizer) QueryBu
 				builder = builder.Paginate(cast)
 			case OrderBy:
 				builder = builder.Order(cast)
+			case Group:
+				builder = builder.GroupBy(cast.Predicate)
 			case DQLizer:
 				builder = builder.Filter(cast)
 			}

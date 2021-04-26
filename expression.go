@@ -431,17 +431,37 @@ type OrderBy struct {
 }
 
 func (orderBy OrderBy) ToDQL() (query string, args []interface{}, err error) {
-	placeholder, valueArgs, err := parseValue(orderBy.Predicate)
+	predicate := orderBy.Predicate
 
-	if err != nil {
-		return "", nil, err
+	if rawVal, ok := orderBy.Predicate.(Filter); ok {
+		if rawVal.funcType != valFunc {
+			return "", nil, fmt.Errorf("invalid function %s on order expression", rawVal.funcType)
+		}
+
+		valDql, _, err := rawVal.ToDQL()
+
+		if err != nil {
+			return "", nil, err
+		}
+
+		predicate = valDql
 	}
 
-	query = fmt.Sprintf("%s:%s", orderBy.Direction, placeholder)
-
-	args = append(args, valueArgs...)
-
+	query = fmt.Sprintf("%s:%s", orderBy.Direction, predicate)
 	return
+}
+
+type Group struct {
+	Predicate string
+}
+
+func (group Group) ToDQL() (query string, args []interface{}, err error) {
+	query = group.Predicate
+	return
+}
+
+func GroupBy(name string) Group {
+	return Group{name}
 }
 
 func parseValue(value interface{}) (valuePlaceholder string, args []interface{}, err error) {
@@ -481,11 +501,8 @@ func getSortedVariables(exp map[string]interface{}) []string {
 		sortedKeys = append(sortedKeys, k)
 	}
 	sort.Slice(sortedKeys, func(i, j int) bool {
-		sNumA := strings.Replace(sortedKeys[i], "$", "", 1)
-		sNumB := strings.Replace(sortedKeys[j], "$", "", 1)
-
-		numA, _ := strconv.Atoi(sNumA)
-		numB, _ := strconv.Atoi(sNumB)
+		numA, _ := strconv.Atoi(sortedKeys[i])
+		numB, _ := strconv.Atoi(sortedKeys[j])
 		return numA < numB
 	})
 	return sortedKeys

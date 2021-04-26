@@ -12,6 +12,7 @@ type edge struct {
 	Filters    []DQLizer
 	Pagination Pagination
 	Order      []DQLizer
+	Group      []DQLizer
 	IsRoot     bool
 	IsVariable bool
 }
@@ -103,6 +104,10 @@ func (edge edge) ToDQL() (query string, args []interface{}, err error) {
 		return "", nil, err
 	}
 
+	if err := edge.addGroupBy(&writer, &args); err != nil {
+		return "", nil, err
+	}
+
 	writer.WriteString(" { ")
 
 	if err := edge.addSelection(&writer, &args); err != nil {
@@ -134,6 +139,24 @@ func (edge edge) addFilters(writer *bytes.Buffer, args *[]interface{}) error {
 
 func (edge edge) addSelection(writer *bytes.Buffer, args *[]interface{}) error {
 	return addPart(edge.Selection, writer, args)
+}
+
+func (edge edge) addGroupBy(writer *bytes.Buffer, args *[]interface{}) error {
+	if len(edge.Group) == 0 {
+		return nil
+	}
+
+	writer.WriteString(" @groupby(")
+
+	var statements []string
+	if err := addStatement(edge.Group, &statements, args); err != nil {
+		return err
+	}
+
+	writer.WriteString(strings.Join(statements, ","))
+
+	writer.WriteString(")")
+	return nil
 }
 
 func EdgePath(abstractPath ...string) string {

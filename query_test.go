@@ -20,8 +20,8 @@ func Test_Simple_Query(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Equal(t, map[string]interface{}{
-		"$0": "value",
-		"$1": "value1",
+		"0": "value",
+		"1": "value1",
 	}, variables)
 
 	expected := dql.Minify(`
@@ -68,7 +68,7 @@ func Test_Query_Nested(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Equal(t, map[string]interface{}{
-		"$0": "Blade Runner",
+		"0": "Blade Runner",
 	}, variables)
 
 	expected := dql.Minify(`
@@ -130,12 +130,12 @@ func Test_Query_Filter_Nested(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Equal(t, map[string]interface{}{
-		"$0": "Blade Runner",
-		"$1": 20,
-		"$2": 18,
-		"$3": 20,
-		"$4": 30,
-		"$5": 3,
+		"0": "Blade Runner",
+		"1": 20,
+		"2": 18,
+		"3": 20,
+		"4": 30,
+		"5": 3,
 	}, variables)
 
 	expected := dql.Minify(`
@@ -199,13 +199,13 @@ func Test_Query_Connecting_Filter(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Equal(t, map[string]interface{}{
-		"$0": "Blade Runner",
-		"$1": "actor1",
-		"$2": "actor2",
-		"$3": "author3",
-		"$4": 20,
-		"$5": "author4",
-		"$6": 50,
+		"0": "Blade Runner",
+		"1": "actor1",
+		"2": "actor2",
+		"3": "author3",
+		"4": 20,
+		"5": "author4",
+		"6": 50,
 	}, variables)
 
 	expected := dql.Minify(`
@@ -274,17 +274,17 @@ func Test_Query_Pagination(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Equal(t, map[string]interface{}{
-		"$0":  "Blade Runner",
-		"$1":  20,
-		"$2":  1,
-		"$3":  "4567",
-		"$4":  10,
-		"$5":  2,
-		"$6":  "1234",
-		"$7":  2,
-		"$8":  3,
-		"$9":  "45",
-		"$10": 30,
+		"0":  "Blade Runner",
+		"1":  20,
+		"2":  1,
+		"3":  "4567",
+		"4":  10,
+		"5":  2,
+		"6":  "1234",
+		"7":  2,
+		"8":  3,
+		"9":  "45",
+		"10": 30,
 	}, variables)
 
 	expected := dql.Minify(`
@@ -333,8 +333,8 @@ func Test_Query_Variable(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Equal(t, map[string]interface{}{
-		"$0": "test",
-		"$1": "value",
+		"0": "test",
+		"1": "value",
 	}, variables)
 
 	expected := dql.Minify(`
@@ -402,8 +402,7 @@ func Test_Query_Value_Variable(t *testing.T) {
 	require.Equal(t, expected, query)
 }
 
-func Test_Query_Value_OrderBy(t *testing.T) {
-
+func Test_Query_OrderBy(t *testing.T) {
 	query, variables, err := dql.
 		Query("bladerunner", dql.EqFn("item", "value")).
 		Fields(`
@@ -413,7 +412,7 @@ func Test_Query_Value_OrderBy(t *testing.T) {
 			netflix_id
 		`).
 		OrderAsc("name").
-		OrderDesc("initial_release_date").
+		OrderDesc(dql.Val("initial_release_date")).
 		Edge("films", dql.Fields(`
 			id
 			date
@@ -421,13 +420,13 @@ func Test_Query_Value_OrderBy(t *testing.T) {
 		ToDQL()
 
 	expected := dql.Minify(`
-		query Bladerunner($0:string, $1:string, $2:string, $3:int, $4:string) {
-			bladerunner(func: eq(item,$0),orderasc:$1,orderdesc:$2) {
+		query Bladerunner($0:string, $1:int) {
+			bladerunner(func: eq(item,$0),orderasc:name,orderdesc:val(initial_release_date)) {
 				uid
 				name
 				initial_release_date
 				netflix_id
-				films(first:$3)(orderdesc:$4) {
+				films(first:$1)(orderdesc:date) {
 					id
 					date
 				}
@@ -436,11 +435,57 @@ func Test_Query_Value_OrderBy(t *testing.T) {
 	`)
 
 	require.Equal(t, map[string]interface{}{
-		"$0": "value",
-		"$1": "name",
-		"$2": "initial_release_date",
-		"$3": 10,
-		"$4": "date",
+		"0": "value",
+		"1": 10,
+	}, variables)
+
+	require.NoError(t, err)
+	require.Equal(t, expected, query)
+}
+
+func Test_Query_GroupBy(t *testing.T) {
+	variable := dql.Variable(dql.EqFn("name", "test")).
+		Edge("film", dql.Fields(`
+			 a AS genre
+		`), dql.GroupBy("genre"))
+
+	query, variables, err := dql.
+		Query("bladerunner", dql.EqFn("item", "value")).
+		Fields(`
+			uid
+			name
+			initial_release_date
+			netflix_id
+		`).
+		Edge("films", dql.Fields(`
+			total_movies:val(a)
+		`)).
+		Variable(variable).
+		ToDQL()
+
+	expected := dql.Minify(`
+		query Bladerunner($0:string, $1:string) {
+			var(func: eq(name,$0)) {
+				film @groupby(genre) {
+					a AS genre
+				}
+			}
+
+			bladerunner(func: eq(item,$1)) {
+				uid
+				name
+				initial_release_date
+				netflix_id
+				films {
+					total_movies:val(a)
+				}
+			}
+		}
+	`)
+
+	require.Equal(t, map[string]interface{}{
+		"0": "test",
+		"1": "value",
 	}, variables)
 
 	require.NoError(t, err)

@@ -26,7 +26,7 @@ Deku tries to simplify the construction of DGraph Queries and mutations with a f
 - [x] Pagination
 - [ ] Aggregation
 - [x] Sorting
-- [ ] GroupBy
+- [x] GroupBy
 - [x] Multiple Query Block
 - [x] Query Variables
 - [x] Values Variables
