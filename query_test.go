@@ -401,3 +401,48 @@ func Test_Query_Value_Variable(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, expected, query)
 }
+
+func Test_Query_Value_OrderBy(t *testing.T) {
+
+	query, variables, err := dql.
+		Query("bladerunner", dql.EqFn("item", "value")).
+		Fields(`
+			uid
+			name
+			initial_release_date
+			netflix_id
+		`).
+		OrderAsc("name").
+		OrderDesc("initial_release_date").
+		Edge("films", dql.Fields(`
+			id
+			date
+		`), dql.OrderBy{Direction: dql.OrderDesc, Predicate: "date"}, dql.Pagination{First: 10}).
+		ToDQL()
+
+	expected := dql.Minify(`
+		query Bladerunner($0:string, $1:string, $2:string, $3:int, $4:string) {
+			bladerunner(func: eq(item,$0),orderasc:$1,orderdesc:$2) {
+				uid
+				name
+				initial_release_date
+				netflix_id
+				films(first:$3)(orderdesc:$4) {
+					id
+					date
+				}
+			}
+		}
+	`)
+
+	require.Equal(t, map[string]interface{}{
+		"$0": "value",
+		"$1": "name",
+		"$2": "initial_release_date",
+		"$3": 10,
+		"$4": "date",
+	}, variables)
+
+	require.NoError(t, err)
+	require.Equal(t, expected, query)
+}

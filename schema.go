@@ -53,7 +53,7 @@ func (schema *SchemaBuilder) PredicatesToString() (string, error) {
 
 		if registeredPredicate, ok := registeredPredicates[predicate.name]; ok {
 			if registeredPredicate.scalarType != predicate.scalarType {
-				return "", fmt.Errorf("predicate '%s' already registered with a different scalar type '%s'", predicate.name, registeredPredicate.scalarType)
+				return "", fmt.Errorf("Predicate '%s' already registered with a different scalar type '%s'", predicate.name, registeredPredicate.scalarType)
 			}
 			continue
 		}

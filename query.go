@@ -76,6 +76,27 @@ func (builder QueryBuilder) Fields(fields ...string) QueryBuilder {
 	return builder
 }
 
+func (builder QueryBuilder) Order(order OrderBy) QueryBuilder {
+	builder.rootEdge.Order = append(builder.rootEdge.Order, order)
+	return builder
+}
+
+func (builder QueryBuilder) OrderAsc(predicate interface{}) QueryBuilder {
+	builder.rootEdge.Order = append(builder.rootEdge.Order, OrderBy{
+		Direction: OrderAsc,
+		Predicate: predicate,
+	})
+	return builder
+}
+
+func (builder QueryBuilder) OrderDesc(predicate interface{}) QueryBuilder {
+	builder.rootEdge.Order = append(builder.rootEdge.Order, OrderBy{
+		Direction: OrderDesc,
+		Predicate: predicate,
+	})
+	return builder
+}
+
 func (builder QueryBuilder) Filter(filters ...DQLizer) QueryBuilder {
 	for _, filter := range filters {
 		builder.rootEdge.Filters = append(builder.rootEdge.Filters, filter)
@@ -98,6 +119,8 @@ func (builder QueryBuilder) Edge(fullPath string, queryParts ...DQLizer) QueryBu
 				builder = builder.Fields(string(cast))
 			case Pagination:
 				builder = builder.Paginate(cast)
+			case OrderBy:
+				builder = builder.Order(cast)
 			case DQLizer:
 				builder = builder.Filter(cast)
 			}

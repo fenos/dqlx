@@ -11,6 +11,7 @@ type edge struct {
 	RootFilter DQLizer
 	Filters    []DQLizer
 	Pagination Pagination
+	Order      []DQLizer
 	IsRoot     bool
 	IsVariable bool
 }
@@ -53,6 +54,7 @@ func (edge edge) ToDQL() (query string, args []interface{}, err error) {
 	}
 
 	if edge.IsRoot {
+		// Pagination
 		if edge.Pagination.WantsPagination() {
 			writer.WriteString(",")
 
@@ -61,13 +63,38 @@ func (edge edge) ToDQL() (query string, args []interface{}, err error) {
 			}
 		}
 
+		// Order
+		if len(edge.Order) > 0 {
+			writer.WriteString(",")
+			var statements []string
+			if err := addStatement(edge.Order, &statements, &args); err != nil {
+				return "", nil, err
+			}
+
+			writer.WriteString(strings.Join(statements, ","))
+		}
+
 		writer.WriteString(")")
 	} else {
+
+		// Pagination
 		if edge.Pagination.WantsPagination() {
 			writer.WriteString("(")
 			if err := addPart(edge.Pagination, &writer, &args); err != nil {
 				return "", nil, err
 			}
+			writer.WriteString(")")
+		}
+
+		// Order
+		if len(edge.Order) > 0 {
+			writer.WriteString("(")
+			var statements []string
+			if err := addStatement(edge.Order, &statements, &args); err != nil {
+				return "", nil, err
+			}
+
+			writer.WriteString(strings.Join(statements, ","))
 			writer.WriteString(")")
 		}
 	}

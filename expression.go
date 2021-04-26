@@ -22,8 +22,8 @@ var (
 	anyoftermsFunc FuncType = "anyofterms" // Done
 	regexpFunc     FuncType = "regexp"     // Done
 	matchFunc      FuncType = "match"      // Done
-	alloftextFunc  FuncType = "alloftext"
-	anyoftextFunc  FuncType = "anyoftext"
+	alloftextFunc  FuncType = "alloftext"  // Done
+	anyoftextFunc  FuncType = "anyoftext"  // Done
 	countFunc      FuncType = "count"
 	exactFunc      FuncType = "exact"
 	termFunc       FuncType = "term"
@@ -311,34 +311,49 @@ func MatchFn(field string, pattern string) FilterFn {
 	}
 }
 
-type Pagination struct {
-	First  int
-	Offset int
-	After  string
+//countFunc      FuncType = "count"
+//exactFunc      FuncType = "exact"
+//termFunc       FuncType = "term"
+//fulltextFunc   FuncType = "fulltext"
+//sumFunc        FuncType = "sum"
+//betweenFunc    FuncType = "between"
+//uidFunc        FuncType = "uid"
+//uid      FuncType = "uid_in"
+
+// AllOfText alloftext expression alloftext(field, value)
+type AllOfText filterKV
+
+func (alloftext AllOfText) ToDQL() (query string, args []interface{}, err error) {
+	return Filter{
+		funcType: alloftextFunc,
+		value:    filterKV(alloftext),
+	}.ToDQL()
 }
 
-func (p Pagination) WantsPagination() bool {
-	return p.Offset != 0 || p.First != 0 || p.After != ""
+func AllOfTextFn(field string, pattern string) FilterFn {
+	return func() DQLizer {
+		expression := AllOfText{}
+		expression[field] = pattern
+		return expression
+	}
 }
 
-func (p Pagination) ToDQL() (query string, args []interface{}, err error) {
-	var paginationExpressions []string
-	if p.First != 0 {
-		paginationExpressions = append(paginationExpressions, "first:??")
-		args = append(args, p.First)
-	}
+// AnyOfText anyoftext expression anyoftext(field, value)
+type AnyOfText filterKV
 
-	if p.Offset != 0 {
-		paginationExpressions = append(paginationExpressions, "offset:??")
-		args = append(args, p.Offset)
-	}
+func (anyoftext AnyOfText) ToDQL() (query string, args []interface{}, err error) {
+	return Filter{
+		funcType: anyoftextFunc,
+		value:    filterKV(anyoftext),
+	}.ToDQL()
+}
 
-	if p.After != "" {
-		paginationExpressions = append(paginationExpressions, "after:??")
-		args = append(args, p.After)
+func AnyOfTextFn(field string, pattern string) FilterFn {
+	return func() DQLizer {
+		expression := AnyOfText{}
+		expression[field] = pattern
+		return expression
 	}
-
-	return strings.Join(paginationExpressions, ","), args, nil
 }
 
 type RawValue struct {
@@ -373,16 +388,61 @@ func UIDFn(value interface{}) FilterFn {
 	}
 }
 
-//alloftextFunc  FuncType = "alloftext"
-//anyoftextFunc  FuncType = "anyoftext"
-//countFunc      FuncType = "count"
-//exactFunc      FuncType = "exact"
-//termFunc       FuncType = "term"
-//fulltextFunc   FuncType = "fulltext"
-//sumFunc        FuncType = "sum"
-//betweenFunc    FuncType = "between"
-//uidFunc        FuncType = "uid"
-//uid      FuncType = "uid_in"
+type Pagination struct {
+	First  int
+	Offset int
+	After  string
+}
+
+func (p Pagination) WantsPagination() bool {
+	return p.Offset != 0 || p.First != 0 || p.After != ""
+}
+
+func (p Pagination) ToDQL() (query string, args []interface{}, err error) {
+	var paginationExpressions []string
+	if p.First != 0 {
+		paginationExpressions = append(paginationExpressions, "first:??")
+		args = append(args, p.First)
+	}
+
+	if p.Offset != 0 {
+		paginationExpressions = append(paginationExpressions, "offset:??")
+		args = append(args, p.Offset)
+	}
+
+	if p.After != "" {
+		paginationExpressions = append(paginationExpressions, "after:??")
+		args = append(args, p.After)
+	}
+
+	return strings.Join(paginationExpressions, ","), args, nil
+}
+
+type OrderDirection string
+
+var (
+	OrderAsc  OrderDirection = "orderasc"
+	OrderDesc OrderDirection = "orderdesc"
+)
+
+type OrderBy struct {
+	Direction OrderDirection
+	Predicate interface{}
+}
+
+func (orderBy OrderBy) ToDQL() (query string, args []interface{}, err error) {
+	placeholder, valueArgs, err := parseValue(orderBy.Predicate)
+
+	if err != nil {
+		return "", nil, err
+	}
+
+	query = fmt.Sprintf("%s:%s", orderBy.Direction, placeholder)
+
+	args = append(args, valueArgs...)
+
+	return
+}
 
 func parseValue(value interface{}) (valuePlaceholder string, args []interface{}, err error) {
 	if isListType(value) {

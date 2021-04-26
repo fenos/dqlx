@@ -7,7 +7,7 @@ import (
 )
 
 func Test_Schema_ToDQL(t *testing.T) {
-	t.Run("add a simple predicate", func(t *testing.T) {
+	t.Run("add a simple Predicate", func(t *testing.T) {
 		schema := dql.NewSchema()
 		schema.Predicate("name", dql.ScalarString)
 		schema.Predicate("surname", dql.ScalarString)
