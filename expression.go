@@ -24,12 +24,12 @@ var (
 	matchFunc      FuncType = "match"      // Done
 	alloftextFunc  FuncType = "alloftext"  // Done
 	anyoftextFunc  FuncType = "anyoftext"  // Done
-	countFunc      FuncType = "count"
-	exactFunc      FuncType = "exact"
-	termFunc       FuncType = "term"
-	fulltextFunc   FuncType = "fulltext"
-	valFunc        FuncType = "val"
-	sumFunc        FuncType = "sum"
+	countFunc      FuncType = "count"      // Done
+	exactFunc      FuncType = "exact"      // Done
+	termFunc       FuncType = "term"       // Done
+	fulltextFunc   FuncType = "fulltext"   // Done
+	valFunc        FuncType = "val"        // Done
+	sumFunc        FuncType = "sum"        // Done
 	betweenFunc    FuncType = "between"
 	uidFunc        FuncType = "uid" // Done
 	uid            FuncType = "uid_in"
@@ -311,15 +311,6 @@ func MatchFn(field string, pattern string) FilterFn {
 	}
 }
 
-//countFunc      FuncType = "count"
-//exactFunc      FuncType = "exact"
-//termFunc       FuncType = "term"
-//fulltextFunc   FuncType = "fulltext"
-//sumFunc        FuncType = "sum"
-//betweenFunc    FuncType = "between"
-//uidFunc        FuncType = "uid"
-//uid      FuncType = "uid_in"
-
 // AllOfText alloftext expression alloftext(field, value)
 type AllOfText filterKV
 
@@ -354,6 +345,80 @@ func AnyOfTextFn(field string, pattern string) FilterFn {
 		expression[field] = pattern
 		return expression
 	}
+}
+
+// Exact exact expression exact(field, value)
+type Exact filterKV
+
+func (exact Exact) ToDQL() (query string, args []interface{}, err error) {
+	return Filter{
+		funcType: exactFunc,
+		value:    filterKV(exact),
+	}.ToDQL()
+}
+
+func ExactFn(field string, pattern string) FilterFn {
+	return func() DQLizer {
+		expression := AnyOfText{}
+		expression[field] = pattern
+		return expression
+	}
+}
+
+// Term term expression exact(field, value)
+type Term filterKV
+
+func (term Term) ToDQL() (query string, args []interface{}, err error) {
+	return Filter{
+		funcType: termFunc,
+		value:    filterKV(term),
+	}.ToDQL()
+}
+
+func TermFn(field string, pattern string) FilterFn {
+	return func() DQLizer {
+		expression := Term{}
+		expression[field] = pattern
+		return expression
+	}
+}
+
+// FullText fulltext expression fulltext(field, value)
+type FullText filterKV
+
+func (fulltext FullText) ToDQL() (query string, args []interface{}, err error) {
+	return Filter{
+		funcType: fulltextFunc,
+		value:    filterKV(fulltext),
+	}.ToDQL()
+}
+
+func FullTextFn(field string, pattern string) FilterFn {
+	return func() DQLizer {
+		expression := FullText{}
+		expression[field] = pattern
+		return expression
+	}
+}
+
+func Sum(field string) RawValue {
+	return RawVal("sum(val(" + field + "))")
+}
+
+func Avg(field string) RawValue {
+	return RawVal("avg(val(" + field + "))")
+}
+
+func Min(field string) RawValue {
+	return RawVal("min(val(" + field + "))")
+}
+
+func Max(field string) RawValue {
+	return RawVal("max(val(" + field + "))")
+}
+
+func Count(field string) RawValue {
+	return RawVal("count(" + field + ")")
 }
 
 type RawValue struct {
