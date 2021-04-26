@@ -47,23 +47,23 @@ func Test_Query_Nested(t *testing.T) {
 			initial_release_date
 			netflix_id
 		`).
-		Edge("authors", dql.Fields(`
+		Edge("authors", `
 			uid
 			name
 			surname
 			age
-		`)).
-		Edge("actors", dql.Fields(`
+		`).
+		Edge("actors", `
 			uid
 			surname
-		`)).
-		Edge("actors->rewards", dql.Fields(`
+		`).
+		Edge("actors->rewards", `
 			uid
 			points
-		`)).
-		Edge("actors->rewards->venues", dql.Fields(`
+		`).
+		Edge("actors->rewards->venues", `
 			street
-		`)).
+		`).
 		ToDQL()
 
 	require.NoError(t, err)
@@ -111,21 +111,21 @@ func Test_Query_Filter_Nested(t *testing.T) {
 			initial_release_date
 			netflix_id
 		`).
-		Edge("authors", dql.Fields(`
+		Edge("authors", `
 			uid
 			name
 			surname
 			age
-		`), dql.Eq{"age": 20}).
-		Edge("actors", dql.Fields(`
+		`, dql.Eq{"age": 20}).
+		Edge("actors", `
 			uid
 			surname
 			age
-		`), dql.Gt{"age": []int{18, 20, 30}}).
-		Edge(dql.EdgePath("actors", "rewards"), dql.Fields(`
+		`, dql.Gt{"age": []int{18, 20, 30}}).
+		Edge(dql.EdgePath("actors", "rewards"), `
 			uid
 			points
-		`), dql.Gt{"points": 3}).
+		`, dql.Gt{"points": 3}).
 		ToDQL()
 
 	require.NoError(t, err)
@@ -180,12 +180,12 @@ func Test_Query_Connecting_Filter(t *testing.T) {
 			dql.Eq{"name": "actor1"},
 			dql.Eq{"name": "actor2"},
 		}).
-		Edge("authors", dql.Fields(`
+		Edge("authors", `
 			uid
 			name
 			surname
 			age
-		`), dql.Or{
+		`, dql.Or{
 			dql.And{
 				dql.Eq{"name": "author3"},
 				dql.Gt{"age": 20},
@@ -312,13 +312,24 @@ func Test_Query_Pagination(t *testing.T) {
 	require.Equal(t, expected, query)
 }
 
+//func Test_OnlyEdges(t *testing.T) {
+//	variable := dql.Variable(dql.EqFn("name", "test")).
+//		Edge("film", nil).
+//		Edge("film->performance", dql.ParseFields(`
+//			 D AS genre
+//		`))
+//
+//	query, _, err := variable.ToDQL()
+//	require.NoError(t, err)
+//	require.Equal(t, "", query)
+//}
+
 func Test_Query_Variable(t *testing.T) {
-	t.Skipf("Working progress")
 	variable := dql.Variable(dql.EqFn("name", "test")).
-		Edge("film", nil).
-		Edge("film->performance", dql.Fields(`
+		Edge("film", "").
+		Edge("film->performance", `
 			 D AS genre
-		`))
+		`)
 
 	query, variables, err := dql.
 		Query("bladerunner", dql.EqFn("item", "value")).
@@ -340,15 +351,15 @@ func Test_Query_Variable(t *testing.T) {
 
 	expected := dql.Minify(`
 		query Bladerunner($0:string, $1:string) {
-			var(func:eq(name, $1)) {
+			var(func: eq(name,$0)) {
 				film {
 					performance {
-					 D As genre
+					 D AS genre
 					}
 				}
 			}
 
-			bladerunner(func: eq(item,$0)) @filter(eq(field1,D)) {
+			bladerunner(func: eq(item,$1)) @filter(eq(field1,D)) {
 				uid
 				name
 				initial_release_date

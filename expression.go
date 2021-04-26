@@ -9,44 +9,42 @@ import (
 	"strings"
 )
 
-type QueryFn string
+type FuncType string
 
 var (
-	eqOperator         QueryFn = "eq"  // Done
-	geOperator         QueryFn = "ge"  // Done
-	gtOperator         QueryFn = "gt"  // Done
-	leOperator         QueryFn = "le"  // Done
-	ltOperator         QueryFn = "lt"  // Done
-	hasOperator        QueryFn = "has" // Done
-	alloftermsOperator QueryFn = "allofterms"
-	anyoftermsOperator QueryFn = "anyofterms"
-	regexpOperator     QueryFn = "regexp"
-	matchOperator      QueryFn = "match"
-	alloftextOperator  QueryFn = "alloftext"
-	anyoftextOperator  QueryFn = "anyoftext"
-	countOperator      QueryFn = "count"
-	exactOperator      QueryFn = "exact"
-	termOperator       QueryFn = "term"
-	fulltextOperator   QueryFn = "fulltext"
-	valOperator        QueryFn = "val"
-	sumOperator        QueryFn = "sum"
-	betweenOperator    QueryFn = "between"
-	uidOperator        QueryFn = "uid"
-	uidInOperator      QueryFn = "uid_in"
+	eqFunc         FuncType = "eq"         // Done
+	geFunc         FuncType = "ge"         // Done
+	gtFunc         FuncType = "gt"         // Done
+	leFunc         FuncType = "le"         // Done
+	ltFunc         FuncType = "lt"         // Done
+	hasFunc        FuncType = "has"        // Done
+	alloftermsFunc FuncType = "allofterms" // Done
+	anyoftermsFunc FuncType = "anyofterms" // Done
+	regexpFunc     FuncType = "regexp"     // Done
+	matchFunc      FuncType = "match"      // Done
+	alloftextFunc  FuncType = "alloftext"
+	anyoftextFunc  FuncType = "anyoftext"
+	countFunc      FuncType = "count"
+	exactFunc      FuncType = "exact"
+	termFunc       FuncType = "term"
+	fulltextFunc   FuncType = "fulltext"
+	valFunc        FuncType = "val"
+	sumFunc        FuncType = "sum"
+	betweenFunc    FuncType = "between"
+	uidFunc        FuncType = "uid"
+	uid            FuncType = "uid_in"
 )
 
 type FilterFn = func() DQLizer
 
 type QueryFunction struct {
-	operator QueryFn
+	funcType FuncType
 	field    string
 	value    interface{}
 }
 
-var placeholderSymbol = "??"
-
 func (queryFunction QueryFunction) ToDQL() (query string, args []interface{}, err error) {
-	placeholder := placeholderSymbol
+	placeholder := symbolValuePlaceholder
 
 	if isListType(queryFunction.value) {
 		listValue, err := toInterfaceSlice(queryFunction.value)
@@ -57,18 +55,18 @@ func (queryFunction QueryFunction) ToDQL() (query string, args []interface{}, er
 
 		placeholders := make([]string, len(listValue))
 		for index, value := range listValue {
-			placeholders[index] = placeholderSymbol
+			placeholders[index] = symbolValuePlaceholder
 			args = append(args, value)
 		}
 
 		placeholder = fmt.Sprintf("[%s]", strings.Join(placeholders, ","))
-	} else if varRef, ok := queryFunction.value.(varRef); ok {
-		placeholder = string(varRef)
+	} else if varRef, ok := queryFunction.value.(RawValue); ok {
+		placeholder = fmt.Sprintf("%s", varRef.val)
 	} else {
 		args = append(args, queryFunction.value)
 	}
 
-	query = fmt.Sprintf("%s(%s,%s)", queryFunction.operator, queryFunction.field, placeholder)
+	query = fmt.Sprintf("%s(%s,%s)", queryFunction.funcType, queryFunction.field, placeholder)
 
 	return query, args, nil
 }
@@ -108,9 +106,9 @@ func (and And) ToDQL() (query string, args []interface{}, err error) {
 	return connector(and).join(" AND ")
 }
 
-type mapExpression map[string]interface{}
+type filterMap map[string]interface{}
 
-func (expression mapExpression) toDQL(operator QueryFn) (query string, args []interface{}, err error) {
+func (expression filterMap) toDQL(funcType FuncType) (query string, args []interface{}, err error) {
 	var expressions []string
 	sortedKeys := getSortedKeys(expression)
 
@@ -118,7 +116,7 @@ func (expression mapExpression) toDQL(operator QueryFn) (query string, args []in
 		value := expression[key]
 
 		queryFn := QueryFunction{
-			operator: operator,
+			funcType: funcType,
 			field:    key,
 			value:    value,
 		}
@@ -138,10 +136,10 @@ func (expression mapExpression) toDQL(operator QueryFn) (query string, args []in
 }
 
 // Eq eq expression eq(field, value)
-type Eq mapExpression
+type Eq filterMap
 
 func (eq Eq) ToDQL() (query string, args []interface{}, err error) {
-	return mapExpression(eq).toDQL(eqOperator)
+	return filterMap(eq).toDQL(eqFunc)
 }
 
 func EqFn(field string, value interface{}) FilterFn {
@@ -153,10 +151,10 @@ func EqFn(field string, value interface{}) FilterFn {
 }
 
 // Le le expression le(field, value)
-type Le mapExpression
+type Le filterMap
 
 func (le Le) ToDQL() (query string, args []interface{}, err error) {
-	return mapExpression(le).toDQL(leOperator)
+	return filterMap(le).toDQL(leFunc)
 }
 
 func LeFn(field string, value interface{}) FilterFn {
@@ -168,10 +166,10 @@ func LeFn(field string, value interface{}) FilterFn {
 }
 
 // Lt lt expression lt(field, value)
-type Lt mapExpression
+type Lt filterMap
 
 func (lt Lt) ToDQL() (query string, args []interface{}, err error) {
-	return mapExpression(lt).toDQL(ltOperator)
+	return filterMap(lt).toDQL(ltFunc)
 }
 
 func LtFn(field string, value interface{}) FilterFn {
@@ -183,10 +181,10 @@ func LtFn(field string, value interface{}) FilterFn {
 }
 
 // Ge ge expression ge(field, value)
-type Ge mapExpression
+type Ge filterMap
 
 func (ge Ge) ToDQL() (query string, args []interface{}, err error) {
-	return mapExpression(ge).toDQL(geOperator)
+	return filterMap(ge).toDQL(geFunc)
 }
 
 func GeFn(field string, value interface{}) FilterFn {
@@ -198,10 +196,10 @@ func GeFn(field string, value interface{}) FilterFn {
 }
 
 // Gt gt expression gt(field, value)
-type Gt mapExpression
+type Gt filterMap
 
 func (gt Gt) ToDQL() (query string, args []interface{}, err error) {
-	return mapExpression(gt).toDQL(gtOperator)
+	return filterMap(gt).toDQL(gtFunc)
 }
 
 func GtFn(field string, value interface{}) FilterFn {
@@ -213,10 +211,10 @@ func GtFn(field string, value interface{}) FilterFn {
 }
 
 // Has has expression has(field, value)
-type Has mapExpression
+type Has filterMap
 
 func (has Has) ToDQL() (query string, args []interface{}, err error) {
-	return mapExpression(has).toDQL(gtOperator)
+	return filterMap(has).toDQL(gtFunc)
 }
 
 func HasFn(field string, value interface{}) FilterFn {
@@ -228,10 +226,10 @@ func HasFn(field string, value interface{}) FilterFn {
 }
 
 // AllOfTerms allofterms expression allofterms(field, value)
-type AllOfTerms mapExpression
+type AllOfTerms filterMap
 
 func (allOfTerms AllOfTerms) ToDQL() (query string, args []interface{}, err error) {
-	return mapExpression(allOfTerms).toDQL(alloftermsOperator)
+	return filterMap(allOfTerms).toDQL(alloftermsFunc)
 }
 
 func AllOfTermsFn(field string, value interface{}) FilterFn {
@@ -243,10 +241,10 @@ func AllOfTermsFn(field string, value interface{}) FilterFn {
 }
 
 // AnyOfTerms anyofterms expression anyofterms(field, value)
-type AnyOfTerms mapExpression
+type AnyOfTerms filterMap
 
 func (anyOfTerms AnyOfTerms) ToDQL() (query string, args []interface{}, err error) {
-	return mapExpression(anyOfTerms).toDQL(anyoftermsOperator)
+	return filterMap(anyOfTerms).toDQL(anyoftermsFunc)
 }
 
 func AnyOfTermsFn(field string, value interface{}) FilterFn {
@@ -258,10 +256,10 @@ func AnyOfTermsFn(field string, value interface{}) FilterFn {
 }
 
 // Regexp regexp expression regexp(field, /pattern/)
-type Regexp mapExpression
+type Regexp filterMap
 
 func (regexp Regexp) ToDQL() (query string, args []interface{}, err error) {
-	return mapExpression(regexp).toDQL(regexpOperator)
+	return filterMap(regexp).toDQL(regexpFunc)
 }
 
 func RegexpFn(field string, pattern string) FilterFn {
@@ -273,10 +271,10 @@ func RegexpFn(field string, pattern string) FilterFn {
 }
 
 // Match match expression match(field, /pattern/)
-type Match mapExpression
+type Match filterMap
 
 func (match Match) ToDQL() (query string, args []interface{}, err error) {
-	return mapExpression(match).toDQL(matchOperator)
+	return filterMap(match).toDQL(matchFunc)
 }
 
 func MatchFn(field string, pattern string) FilterFn {
@@ -318,27 +316,29 @@ func (p Pagination) ToDQL() (query string, args []interface{}, err error) {
 	return strings.Join(paginationExpressions, ","), args, nil
 }
 
-type varRef string
-
-func Var(ref string) varRef {
-	return varRef(ref)
+type RawValue struct {
+	val interface{}
 }
 
-//alloftermsOperator QueryFn = "allofterms" // DONE
-//anyoftermsOperator QueryFn = "anyofterms" // DONE
-//regexpOperator     QueryFn = "regexp" // DONE
-//matchOperator      QueryFn = "match" // DONE
-//alloftextOperator  QueryFn = "alloftext"
-//anyoftextOperator  QueryFn = "anyoftext"
-//countOperator      QueryFn = "count"
-//exactOperator      QueryFn = "exact"
-//termOperator       QueryFn = "term"
-//fulltextOperator   QueryFn = "fulltext"
-//valOperator        QueryFn = "val"
-//sumOperator        QueryFn = "sum"
-//betweenOperator    QueryFn = "between"
-//uidOperator        QueryFn = "uid"
-//uidInOperator      QueryFn = "uid_in"
+func RawVal(value interface{}) RawValue {
+	return RawValue{value}
+}
+
+func Var(ref string) RawValue {
+	return RawVal(ref)
+}
+
+//alloftextFunc  FuncType = "alloftext"
+//anyoftextFunc  FuncType = "anyoftext"
+//countFunc      FuncType = "count"
+//exactFunc      FuncType = "exact"
+//termFunc       FuncType = "term"
+//fulltextFunc   FuncType = "fulltext"
+//valFunc        FuncType = "val"
+//sumFunc        FuncType = "sum"
+//betweenFunc    FuncType = "between"
+//uidFunc        FuncType = "uid"
+//uid      FuncType = "uid_in"
 
 func getSortedVariables(exp map[string]interface{}) []string {
 	sortedKeys := make([]string, 0, len(exp))

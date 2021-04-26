@@ -8,25 +8,35 @@ import (
 	"time"
 )
 
-type rootOperation struct {
-	operations []queryGrammar
+type Operation interface {
+	DQLizer
+	GetName() string
 }
 
-func BatchQuery(queries ...QueryBuilder) (query string, args map[string]interface{}, err error) {
-	mainOperation := rootOperation{}
+type queryOperation struct {
+	operations []Operation
+	variables  []Operation
+}
+
+func OperationQuery(queries ...QueryBuilder) (query string, args map[string]interface{}, err error) {
+	mainOperation := queryOperation{}
 
 	for _, query := range queries {
-		mainOperation.operations = append(mainOperation.operations, query.toGrammar())
+		mainOperation.operations = append(mainOperation.operations, query.rootEdge)
+
+		for _, variable := range query.variables {
+			mainOperation.variables = append(mainOperation.variables, variable.rootEdge)
+		}
 	}
 
-	return mainOperation.ToQuery()
+	return mainOperation.ToDQL()
 }
 
-func (rootOperation rootOperation) ToQuery() (query string, variables map[string]interface{}, err error) {
-	blocNames := make([]string, len(rootOperation.operations))
+func (grammar queryOperation) ToDQL() (query string, variables map[string]interface{}, err error) {
+	blocNames := make([]string, len(grammar.operations))
 
-	for index, block := range rootOperation.operations {
-		blocNames[index] = strings.Title(strings.ToLower(block.Name()))
+	for index, block := range grammar.operations {
+		blocNames[index] = strings.Title(strings.ToLower(block.GetName()))
 	}
 
 	queryName := strings.Join(blocNames, "_")
@@ -34,15 +44,12 @@ func (rootOperation rootOperation) ToQuery() (query string, variables map[string
 	var args []interface{}
 	var statements []string
 
-	for _, block := range rootOperation.operations {
-		statement, queryArg, err := block.ToDQL()
+	if err := addStatement(grammar.variables, &statements, &args); err != nil {
+		return "", nil, err
+	}
 
-		if err != nil {
-			return "", nil, err
-		}
-
-		statements = append(statements, statement)
-		args = append(args, queryArg...)
+	if err := addStatement(grammar.operations, &statements, &args); err != nil {
+		return "", nil, err
 	}
 
 	innerQuery := strings.Join(statements, " ")
@@ -114,4 +121,32 @@ func replacePlaceholders(query string, args []interface{}) (string, map[string]i
 func isListType(val interface{}) bool {
 	valVal := reflect.ValueOf(val)
 	return valVal.Kind() == reflect.Array || valVal.Kind() == reflect.Slice
+}
+
+func addStatement(operations []Operation, statements *[]string, args *[]interface{}) error {
+	for _, block := range operations {
+		statement, queryArg, err := block.ToDQL()
+
+		if err != nil {
+			return err
+		}
+
+		*statements = append(*statements, statement)
+		*args = append(*args, queryArg...)
+	}
+
+	return nil
+}
+
+func addPart(part DQLizer, writer *bytes.Buffer, args *[]interface{}) error {
+	statement, statementArgs, err := part.ToDQL()
+	*args = append(*args, statementArgs...)
+
+	if err != nil {
+		return err
+	}
+
+	writer.WriteString(statement)
+
+	return nil
 }

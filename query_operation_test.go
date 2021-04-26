@@ -25,7 +25,7 @@ func Test_Multiple_Blocks(t *testing.T) {
 		`).
 		Filter(dql.Eq{"field1": "value1"})
 
-	query, variables, err := dql.BatchQuery(query1, query2)
+	query, variables, err := dql.OperationQuery(query1, query2)
 
 	require.NoError(t, err)
 	require.Equal(t, map[string]interface{}{
