@@ -13,6 +13,7 @@ type edge struct {
 	Pagination Pagination
 	Order      []DQLizer
 	Group      []DQLizer
+	Facets     []DQLizer
 	IsRoot     bool
 	IsVariable bool
 }
@@ -45,7 +46,10 @@ func (edge edge) ToDQL() (query string, args []interface{}, err error) {
 	}
 
 	if edge.IsRoot {
-		writer.WriteString("(func: ")
+		writer.WriteString("(")
+		if edge.RootFilter != nil {
+			writer.WriteString("func: ")
+		}
 	}
 
 	if edge.RootFilter != nil {
@@ -100,6 +104,10 @@ func (edge edge) ToDQL() (query string, args []interface{}, err error) {
 		}
 	}
 
+	if err := edge.addFacets(&writer, &args); err != nil {
+		return "", nil, err
+	}
+
 	if err := edge.addFilters(&writer, &args); err != nil {
 		return "", nil, err
 	}
@@ -117,6 +125,22 @@ func (edge edge) ToDQL() (query string, args []interface{}, err error) {
 	writer.WriteString(" }")
 
 	return writer.String(), args, nil
+}
+
+func (edge edge) addFacets(writer *bytes.Buffer, args *[]interface{}) error {
+	if len(edge.Facets) == 0 {
+		return nil
+	}
+
+	writer.WriteString(" ")
+
+	var statements []string
+	if err := addStatement(edge.Facets, &statements, args); err != nil {
+		return err
+	}
+
+	writer.WriteString(strings.Join(statements, " "))
+	return nil
 }
 
 func (edge edge) addFilters(writer *bytes.Buffer, args *[]interface{}) error {

@@ -76,6 +76,14 @@ func (builder QueryBuilder) Fields(fields ...string) QueryBuilder {
 	return builder
 }
 
+func (builder QueryBuilder) Facets(predicates ...interface{}) QueryBuilder {
+	builder.rootEdge.Facets = append(builder.rootEdge.Facets, facetExpr{
+		Predicates: predicates,
+	})
+
+	return builder
+}
+
 func (builder QueryBuilder) Order(order OrderBy) QueryBuilder {
 	builder.rootEdge.Order = append(builder.rootEdge.Order, order)
 	return builder
@@ -130,6 +138,8 @@ func (builder QueryBuilder) Edge(fullPath string, queryParts ...DQLizer) QueryBu
 				builder = builder.Order(cast)
 			case Group:
 				builder = builder.GroupBy(cast.Predicate)
+			case facetExpr:
+				builder = builder.Facets(cast.Predicates...)
 			case DQLizer:
 				builder = builder.Filter(cast)
 			}
@@ -139,13 +149,23 @@ func (builder QueryBuilder) Edge(fullPath string, queryParts ...DQLizer) QueryBu
 }
 
 func (builder QueryBuilder) EdgeFn(fullPath string, fn func(builder QueryBuilder) QueryBuilder) QueryBuilder {
-	edgePathParts := ParseEdge(fullPath)
+	builder.addEdgeFn(Query(fullPath, nil), fn)
+	return builder
+}
+
+func (builder QueryBuilder) EdgeFromQuery(edge QueryBuilder) QueryBuilder {
+	builder.addEdgeFn(edge, nil)
+	return builder
+}
+
+func (builder QueryBuilder) addEdgeFn(query QueryBuilder, fn func(builder QueryBuilder) QueryBuilder) QueryBuilder {
+	edgePathParts := ParseEdge(query.rootEdge.Name)
 
 	if len(edgePathParts) == 0 {
 		return builder
 	}
 
-	edgeBuilder := Query(fullPath, nil)
+	edgeBuilder := query
 	edgeBuilder.rootEdge.IsRoot = false
 
 	edgeBuilder.rootEdge.Selection.Edges = builder.childrenEdges
@@ -160,7 +180,9 @@ func (builder QueryBuilder) EdgeFn(fullPath string, fn func(builder QueryBuilder
 		parentPath = strings.Join(parents, symbolEdgeTraversal)
 	}
 
-	edgeBuilder = fn(edgeBuilder)
+	if fn != nil {
+		edgeBuilder = fn(edgeBuilder)
+	}
 
 	builder.childrenEdges[parentPath] = append(builder.childrenEdges[parentPath], edgeBuilder)
 

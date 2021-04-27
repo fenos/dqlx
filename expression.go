@@ -1,6 +1,7 @@
 package deku
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"reflect"
@@ -127,7 +128,7 @@ func (filter filterKV) toDQL(funcType FuncType) (query string, args []interface{
 		args = append(args, fnArgs...)
 	}
 
-	return strings.Join(expressions, ", "), args, nil
+	return strings.Join(expressions, " AND "), args, nil
 }
 
 // Eq eq expression eq(field, value)
@@ -401,35 +402,35 @@ func FullTextFn(field string, pattern string) FilterFn {
 	}
 }
 
-func Sum(field string) RawValue {
+func Sum(field string) ValueRaw {
 	return RawVal("sum(val(" + field + "))")
 }
 
-func Avg(field string) RawValue {
+func Avg(field string) ValueRaw {
 	return RawVal("avg(val(" + field + "))")
 }
 
-func Min(field string) RawValue {
+func Min(field string) ValueRaw {
 	return RawVal("min(val(" + field + "))")
 }
 
-func Max(field string) RawValue {
+func Max(field string) ValueRaw {
 	return RawVal("max(val(" + field + "))")
 }
 
-func Count(field string) RawValue {
+func Count(field string) ValueRaw {
 	return RawVal("count(" + field + ")")
 }
 
-type RawValue struct {
+type ValueRaw struct {
 	val interface{}
 }
 
-func RawVal(value interface{}) RawValue {
-	return RawValue{value}
+func RawVal(value interface{}) ValueRaw {
+	return ValueRaw{value}
 }
 
-func Var(ref string) RawValue {
+func Var(ref string) ValueRaw {
 	return RawVal(ref)
 }
 
@@ -529,6 +530,44 @@ func GroupBy(name string) Group {
 	return Group{name}
 }
 
+type facetExpr struct {
+	Predicates []interface{}
+}
+
+func (facet facetExpr) ToDQL() (query string, args []interface{}, err error) {
+	var predicates []string
+	for _, predicate := range facet.Predicates {
+		if dqlizer, ok := predicate.(DQLizer); ok {
+			if err := addStatement([]DQLizer{dqlizer}, &predicates, &args); err != nil {
+				return "", nil, err
+			}
+			continue
+		}
+
+		placeholder, valueArgs, valueErr := parseValue(predicate)
+
+		if valueErr != nil {
+			return "", nil, valueErr
+		}
+
+		predicates = append(predicates, placeholder)
+		args = append(args, valueArgs...)
+	}
+
+	writer := bytes.Buffer{}
+	writer.WriteString("@facets")
+
+	if len(predicates) > 0 {
+		writer.WriteString(fmt.Sprintf("(%s)", strings.Join(predicates, ",")))
+	}
+
+	return writer.String(), args, nil
+}
+
+func Facets(predicates ...interface{}) DQLizer {
+	return facetExpr{Predicates: predicates}
+}
+
 func parseValue(value interface{}) (valuePlaceholder string, args []interface{}, err error) {
 	if isListType(value) {
 		var listValue []interface{}
@@ -550,7 +589,7 @@ func parseValue(value interface{}) (valuePlaceholder string, args []interface{},
 	}
 
 	switch castType := value.(type) {
-	case RawValue:
+	case ValueRaw:
 		valuePlaceholder = fmt.Sprintf("%s", castType.val)
 	default:
 		args = append(args, value)

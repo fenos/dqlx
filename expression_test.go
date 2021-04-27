@@ -14,5 +14,5 @@ func TestEqFn(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Equal(t, args, []interface{}{"value1", "value2"})
-	require.Equal(t, "eq(field1,??), eq(field2,??)", query)
+	require.Equal(t, "eq(field1,??) AND eq(field2,??)", query)
 }

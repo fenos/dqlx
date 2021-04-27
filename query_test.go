@@ -491,3 +491,112 @@ func Test_Query_GroupBy(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, expected, query)
 }
+
+func Test_Query_Facets(t *testing.T) {
+	query, variables, err := dql.
+		Query("bladerunner", dql.EqFn("item", "value")).
+		Facets().
+		Fields(`
+			uid
+			name
+			initial_release_date
+			netflix_id
+		`).
+		Edge("films", dql.Fields(`
+			name
+		`), dql.Facets(dql.Eq{
+			"close":    true,
+			"relative": true,
+		}), dql.Facets(dql.RawVal("relative"))).
+		ToDQL()
+
+	expected := dql.Minify(`
+		query Bladerunner($0:string, $1:bool, $2:bool) {
+			bladerunner(func: eq(item,$0)) @facets {
+				uid
+				name
+				initial_release_date
+				netflix_id
+				films @facets(eq(close,$1) AND eq(relative,$2)) @facets(relative) {
+					name
+				}
+			}
+		}
+	`)
+
+	require.Equal(t, map[string]interface{}{
+		"0": "value",
+		"1": true,
+		"2": true,
+	}, variables)
+
+	require.NoError(t, err)
+	require.Equal(t, expected, query)
+}
+
+func Test_Query_Edge_From_Query(t *testing.T) {
+	edge := dql.Query("actors->rewards->venues", nil).
+		Fields(`
+			street
+		`)
+
+	query, variables, err := dql.
+		Query("bladerunner", dql.EqFn("name@en", "Blade Runner")).
+		Fields(`
+			uid
+			name
+			initial_release_date
+			netflix_id
+		`).
+		Edge("authors", dql.Fields(`
+			uid
+			name
+			surname
+			age
+		`)).
+		Edge("actors", dql.Fields(`
+			uid
+			surname
+		`)).
+		Edge("actors->rewards", dql.Fields(`
+			uid
+			points
+		`)).
+		EdgeFromQuery(edge).
+		ToDQL()
+
+	require.NoError(t, err)
+	require.Equal(t, map[string]interface{}{
+		"0": "Blade Runner",
+	}, variables)
+
+	expected := dql.Minify(`
+		query Bladerunner($0:string) {
+			bladerunner(func: eq(name@en,$0)) {
+				uid
+				name
+				initial_release_date
+				netflix_id
+				authors {
+					uid
+					name
+					surname
+					age
+				}
+				actors {
+					uid
+					surname
+					rewards {
+						uid
+						points
+						venues {
+							street
+						}
+					}
+				}
+			}
+		}
+	`)
+
+	require.Equal(t, expected, query)
+}
