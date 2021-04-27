@@ -6,15 +6,15 @@ import (
 
 type QueryBuilder struct {
 	rootEdge      edge
-	childrenEdges map[string][]QueryBuilder
 	variables     []QueryBuilder
+	childrenEdges map[string][]QueryBuilder
 }
 
-func Query(name string, rootQueryFn FilterFn) QueryBuilder {
+func Query(name string, rootQueryFn *FilterFn) QueryBuilder {
 	var rootFilter DQLizer
 
 	if rootQueryFn != nil {
-		rootFilter = rootQueryFn()
+		rootFilter = *rootQueryFn
 	}
 
 	builder := QueryBuilder{
@@ -35,7 +35,7 @@ func Query(name string, rootQueryFn FilterFn) QueryBuilder {
 	return builder
 }
 
-func Variable(rootQueryFn FilterFn) QueryBuilder {
+func Variable(rootQueryFn *FilterFn) QueryBuilder {
 	query := Query("", rootQueryFn)
 	query.rootEdge.IsVariable = true
 	return query
@@ -84,22 +84,22 @@ func (builder QueryBuilder) Facets(predicates ...interface{}) QueryBuilder {
 	return builder
 }
 
-func (builder QueryBuilder) Order(order OrderBy) QueryBuilder {
+func (builder QueryBuilder) Order(order DQLizer) QueryBuilder {
 	builder.rootEdge.Order = append(builder.rootEdge.Order, order)
 	return builder
 }
 
 func (builder QueryBuilder) OrderAsc(predicate interface{}) QueryBuilder {
-	builder.rootEdge.Order = append(builder.rootEdge.Order, OrderBy{
-		Direction: OrderAsc,
+	builder.rootEdge.Order = append(builder.rootEdge.Order, orderBy{
+		Direction: OrderDirectionAsc,
 		Predicate: predicate,
 	})
 	return builder
 }
 
 func (builder QueryBuilder) OrderDesc(predicate interface{}) QueryBuilder {
-	builder.rootEdge.Order = append(builder.rootEdge.Order, OrderBy{
-		Direction: OrderDesc,
+	builder.rootEdge.Order = append(builder.rootEdge.Order, orderBy{
+		Direction: OrderDirectionDesc,
 		Predicate: predicate,
 	})
 	return builder
@@ -128,15 +128,15 @@ func (builder QueryBuilder) Edge(fullPath string, queryParts ...DQLizer) QueryBu
 	return builder.EdgeFn(fullPath, func(builder QueryBuilder) QueryBuilder {
 		for _, part := range queryParts {
 			switch cast := part.(type) {
-			case Filter:
+			case filterExpr:
 				builder = builder.Filter(part)
 			case Fields:
 				builder = builder.Fields(string(cast))
 			case Pagination:
 				builder = builder.Paginate(cast)
-			case OrderBy:
+			case orderBy:
 				builder = builder.Order(cast)
-			case Group:
+			case group:
 				builder = builder.GroupBy(cast.Predicate)
 			case facetExpr:
 				builder = builder.Facets(cast.Predicates...)

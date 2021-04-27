@@ -4,6 +4,7 @@ import (
 	dql "github.com/fenos/deku"
 	"github.com/stretchr/testify/require"
 	"testing"
+	"time"
 )
 
 func Test_Simple_Query(t *testing.T) {
@@ -328,7 +329,7 @@ func Test_Query_Variable(t *testing.T) {
 			netflix_id
 		`).
 		Variable(variable).
-		Filter(dql.Eq{"field1": dql.Var("D")}).
+		Filter(dql.Eq{"field1": dql.Expr("D")}).
 		ToDQL()
 
 	require.NoError(t, err)
@@ -375,7 +376,7 @@ func Test_Query_Value_Variable(t *testing.T) {
 			netflix_id
 		`).
 		Filter(dql.UID(dql.Val("D"))).
-		Filter(dql.UID(dql.RawVal("D"))).
+		Filter(dql.UID(dql.Expr("D"))).
 		Variable(variable).
 		ToDQL()
 
@@ -416,7 +417,7 @@ func Test_Query_OrderBy(t *testing.T) {
 		Edge("films", dql.Fields(`
 			id
 			date
-		`), dql.OrderBy{Direction: dql.OrderDesc, Predicate: "date"}, dql.Pagination{First: 10}).
+		`), dql.OrderDesc("date"), dql.Pagination{First: 10}).
 		ToDQL()
 
 	expected := dql.Minify(`
@@ -507,7 +508,7 @@ func Test_Query_Facets(t *testing.T) {
 		`), dql.Facets(dql.Eq{
 			"close":    true,
 			"relative": true,
-		}), dql.Facets(dql.RawVal("relative"))).
+		}), dql.Facets(dql.Expr("relative"))).
 		ToDQL()
 
 	expected := dql.Minify(`
@@ -594,6 +595,45 @@ func Test_Query_Edge_From_Query(t *testing.T) {
 						}
 					}
 				}
+			}
+		}
+	`)
+
+	require.Equal(t, expected, query)
+}
+
+func Test_List_function_Query(t *testing.T) {
+
+	from := time.Date(2021, 04, 27, 0, 0, 0, 0, time.UTC)
+	to := time.Date(2021, 04, 28, 0, 0, 0, 0, time.UTC)
+
+	query, variables, err := dql.
+		Query("bladerunner", dql.UIDFn("value")).
+		Fields(`
+			uid
+			name
+			initial_release_date
+			netflix_id
+		`).
+		Filter(dql.UIDIn{"name": "value1"}).
+		Filter(dql.Between("release_date", from, to)).
+		ToDQL()
+
+	require.NoError(t, err)
+	require.Equal(t, map[string]interface{}{
+		"0": "value",
+		"1": "value1",
+		"2": from,
+		"3": to,
+	}, variables)
+
+	expected := dql.Minify(`
+		query Bladerunner($0:string, $1:string, $2:datetime, $3:datetime) {
+			bladerunner(func: uid($0)) @filter(uid_in(name,$1),between(release_date,$2,$3)) {
+				uid
+				name
+				initial_release_date
+				netflix_id
 			}
 		}
 	`)

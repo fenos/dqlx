@@ -157,7 +157,7 @@ func (builder *DGraphType) ToString() (string, error) {
 	for _, field := range builder.predicates {
 
 		if _, ok := registeredPredicates[field.name]; ok {
-			return "", fmt.Errorf("field '%s' already registered on type '%s'", field.name, builder.Name)
+			return "", fmt.Errorf("predicate '%s' already registered on type '%s'", field.name, builder.Name)
 		}
 
 		writer.WriteString(" " + field.name + "")

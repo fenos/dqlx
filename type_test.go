@@ -189,7 +189,7 @@ func TestTypeBuilder_Fields(t *testing.T) {
 		require.Equal(t, expectedPredicates, predicates)
 	})
 
-	t.Run("type field", func(t *testing.T) {
+	t.Run("type predicate", func(t *testing.T) {
 		actor := dql.NewTypeBuilder("Actor")
 		actor.UID("id")
 		actor.Type("Film", "film")
@@ -226,7 +226,7 @@ func TestTypeBuilder_Fields(t *testing.T) {
 		actor.String("name")
 
 		_, err := actor.ToString()
-		require.Error(t, err, "field 'Actor.name' already registered on type 'Actor'")
+		require.Error(t, err, "predicate 'Actor.name' already registered on type 'Actor'")
 	})
 
 	t.Run("can't register multiple QueryFields with the same name", func(t *testing.T) {
