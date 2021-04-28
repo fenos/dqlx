@@ -78,6 +78,12 @@ func getTypeDefinition(schema *SchemaBuilder) ([]TemplateType, map[string]bool) 
 		}
 
 		// Add fields
+		templateType.Fields = append(templateType.Fields, TemplateField{
+			Name:     "Uid",
+			JsonName: "uid",
+			GoType:   "string",
+		})
+
 		for _, predicate := range dType.predicates {
 			if predicate.ScalarType == ScalarDateTime {
 				imports["time"] = true

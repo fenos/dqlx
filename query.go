@@ -46,7 +46,7 @@ func (builder QueryBuilder) As(name string) QueryBuilder {
 	return builder
 }
 
-func (builder QueryBuilder) ToDQL() (query string, args map[string]interface{}, err error) {
+func (builder QueryBuilder) ToDQL() (query string, args map[string]string, err error) {
 	return OperationQuery(builder)
 }
 

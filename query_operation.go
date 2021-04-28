@@ -18,7 +18,7 @@ type queryOperation struct {
 	variables  []Operation
 }
 
-func OperationQuery(queries ...QueryBuilder) (query string, args map[string]interface{}, err error) {
+func OperationQuery(queries ...QueryBuilder) (query string, args map[string]string, err error) {
 	mainOperation := queryOperation{}
 
 	for _, query := range queries {
@@ -32,7 +32,8 @@ func OperationQuery(queries ...QueryBuilder) (query string, args map[string]inte
 	return mainOperation.ToDQL()
 }
 
-func (grammar queryOperation) ToDQL() (query string, variables map[string]interface{}, err error) {
+func (grammar queryOperation) ToDQL() (query string, variables map[string]string, err error) {
+	variables = map[string]string{}
 	blocNames := make([]string, len(grammar.operations))
 
 	for index, block := range grammar.operations {
@@ -54,17 +55,27 @@ func (grammar queryOperation) ToDQL() (query string, variables map[string]interf
 
 	innerQuery := strings.Join(statements, " ")
 
-	query, variables, err = replacePlaceholders(innerQuery, args)
+	query, rawVariables, err := replacePlaceholders(innerQuery, args)
 
 	if err != nil {
 		return
 	}
 
-	queryPlaceholderNames := getSortedVariables(variables)
+	queryPlaceholderNames := getSortedVariables(rawVariables)
 	placeholders := make([]string, len(queryPlaceholderNames))
 
 	for index, placeholderName := range queryPlaceholderNames {
-		placeholders[index] = fmt.Sprintf("$%s:%s", placeholderName, goTypeToDQLType(variables[placeholderName]))
+		variableName := fmt.Sprintf("$%s", placeholderName)
+		switch val := rawVariables[placeholderName].(type) {
+		case time.Time:
+			variables[variableName] = val.Format(time.RFC3339)
+		case *time.Time:
+			variables[variableName] = val.Format(time.RFC3339)
+		default:
+			variables[variableName] = fmt.Sprintf("%v", rawVariables[placeholderName])
+		}
+
+		placeholders[index] = fmt.Sprintf("$%s:%s", placeholderName, goTypeToDQLType(rawVariables[placeholderName]))
 	}
 
 	writer := bytes.Buffer{}

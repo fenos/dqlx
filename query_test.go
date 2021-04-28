@@ -20,9 +20,9 @@ func Test_Simple_Query(t *testing.T) {
 		ToDQL()
 
 	require.NoError(t, err)
-	require.Equal(t, map[string]interface{}{
-		"0": "value",
-		"1": "value1",
+	require.Equal(t, map[string]string{
+		"$0": "value",
+		"$1": "value1",
 	}, variables)
 
 	expected := dql.Minify(`
@@ -68,8 +68,8 @@ func Test_Query_Nested(t *testing.T) {
 		ToDQL()
 
 	require.NoError(t, err)
-	require.Equal(t, map[string]interface{}{
-		"0": "Blade Runner",
+	require.Equal(t, map[string]string{
+		"$0": "Blade Runner",
 	}, variables)
 
 	expected := dql.Minify(`
@@ -130,13 +130,13 @@ func Test_Query_Filter_Nested(t *testing.T) {
 		ToDQL()
 
 	require.NoError(t, err)
-	require.Equal(t, map[string]interface{}{
-		"0": "Blade Runner",
-		"1": 20,
-		"2": 18,
-		"3": 20,
-		"4": 30,
-		"5": 3,
+	require.Equal(t, map[string]string{
+		"$0": "Blade Runner",
+		"$1": "20",
+		"$2": "18",
+		"$3": "20",
+		"$4": "30",
+		"$5": "3",
 	}, variables)
 
 	expected := dql.Minify(`
@@ -199,14 +199,14 @@ func Test_Query_Connecting_Filter(t *testing.T) {
 		ToDQL()
 
 	require.NoError(t, err)
-	require.Equal(t, map[string]interface{}{
-		"0": "Blade Runner",
-		"1": "actor1",
-		"2": "actor2",
-		"3": "author3",
-		"4": 20,
-		"5": "author4",
-		"6": 50,
+	require.Equal(t, map[string]string{
+		"$0": "Blade Runner",
+		"$1": "actor1",
+		"$2": "actor2",
+		"$3": "author3",
+		"$4": "20",
+		"$5": "author4",
+		"$6": "50",
 	}, variables)
 
 	expected := dql.Minify(`
@@ -274,18 +274,18 @@ func Test_Query_Pagination(t *testing.T) {
 		ToDQL()
 
 	require.NoError(t, err)
-	require.Equal(t, map[string]interface{}{
-		"0":  "Blade Runner",
-		"1":  20,
-		"2":  1,
-		"3":  "4567",
-		"4":  10,
-		"5":  2,
-		"6":  "1234",
-		"7":  2,
-		"8":  3,
-		"9":  "45",
-		"10": 30,
+	require.Equal(t, map[string]string{
+		"$0":  "Blade Runner",
+		"$1":  "20",
+		"$2":  "1",
+		"$3":  "4567",
+		"$4":  "10",
+		"$5":  "2",
+		"$6":  "1234",
+		"$7":  "2",
+		"$8":  "3",
+		"$9":  "45",
+		"$10": "30",
 	}, variables)
 
 	expected := dql.Minify(`
@@ -333,9 +333,9 @@ func Test_Query_Variable(t *testing.T) {
 		ToDQL()
 
 	require.NoError(t, err)
-	require.Equal(t, map[string]interface{}{
-		"0": "test",
-		"1": "value",
+	require.Equal(t, map[string]string{
+		"$0": "test",
+		"$1": "value",
 	}, variables)
 
 	expected := dql.Minify(`
@@ -435,9 +435,9 @@ func Test_Query_OrderBy(t *testing.T) {
 		}
 	`)
 
-	require.Equal(t, map[string]interface{}{
-		"0": "value",
-		"1": 10,
+	require.Equal(t, map[string]string{
+		"$0": "value",
+		"$1": "10",
 	}, variables)
 
 	require.NoError(t, err)
@@ -484,9 +484,9 @@ func Test_Query_GroupBy(t *testing.T) {
 		}
 	`)
 
-	require.Equal(t, map[string]interface{}{
-		"0": "test",
-		"1": "value",
+	require.Equal(t, map[string]string{
+		"$0": "test",
+		"$1": "value",
 	}, variables)
 
 	require.NoError(t, err)
@@ -525,10 +525,10 @@ func Test_Query_Facets(t *testing.T) {
 		}
 	`)
 
-	require.Equal(t, map[string]interface{}{
-		"0": "value",
-		"1": true,
-		"2": true,
+	require.Equal(t, map[string]string{
+		"$0": "value",
+		"$1": "true",
+		"$2": "true",
 	}, variables)
 
 	require.NoError(t, err)
@@ -567,8 +567,8 @@ func Test_Query_Edge_From_Query(t *testing.T) {
 		ToDQL()
 
 	require.NoError(t, err)
-	require.Equal(t, map[string]interface{}{
-		"0": "Blade Runner",
+	require.Equal(t, map[string]string{
+		"$0": "Blade Runner",
 	}, variables)
 
 	expected := dql.Minify(`
@@ -620,11 +620,11 @@ func Test_List_function_Query(t *testing.T) {
 		ToDQL()
 
 	require.NoError(t, err)
-	require.Equal(t, map[string]interface{}{
-		"0": "value",
-		"1": "value1",
-		"2": from,
-		"3": to,
+	require.Equal(t, map[string]string{
+		"$0": "value",
+		"$1": "value1",
+		"$2": from.Format(time.RFC3339),
+		"$3": to.Format(time.RFC3339),
 	}, variables)
 
 	expected := dql.Minify(`

@@ -28,11 +28,11 @@ func Test_Multiple_Blocks(t *testing.T) {
 	query, variables, err := dql.OperationQuery(query1, query2)
 
 	require.NoError(t, err)
-	require.Equal(t, map[string]interface{}{
-		"0": "value",
-		"1": "value1",
-		"2": "value",
-		"3": "value1",
+	require.Equal(t, map[string]string{
+		"$0": "value",
+		"$1": "value1",
+		"$2": "value",
+		"$3": "value1",
 	}, variables)
 
 	expected := dql.Minify(`
