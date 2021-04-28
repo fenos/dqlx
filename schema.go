@@ -36,7 +36,7 @@ func (schema *SchemaBuilder) ToDQL() (string, error) {
 	writer.WriteString(predicates)
 
 	if types != "" {
-		writer.WriteString(" ")
+		writer.WriteString("\n\n")
 		writer.WriteString(types)
 	}
 
@@ -63,7 +63,7 @@ func (schema *SchemaBuilder) PredicatesToString() (string, error) {
 		registeredPredicates[predicate.name] = predicate
 	}
 
-	writer.WriteString(strings.Join(predicates, " "))
+	writer.WriteString(strings.Join(predicates, "\n"))
 	return writer.String(), nil
 }
 
@@ -81,14 +81,14 @@ func (schema *SchemaBuilder) TypesToString() (string, error) {
 		types[index] = dqlExpression
 	}
 
-	writer.WriteString(strings.Join(types, " "))
+	writer.WriteString(strings.Join(types, "\n"))
 
 	return writer.String(), nil
 }
 
 func (schema *SchemaBuilder) HasType(name string) bool {
 	for _, schemaType := range schema.types {
-		if schemaType.Name == name {
+		if schemaType.name == name {
 			return true
 		}
 	}
@@ -104,7 +104,9 @@ func (schema *SchemaBuilder) HasPredicate(name string) bool {
 	return false
 }
 
-func (schema *SchemaBuilder) Type(name string, options ...TypeBuilderOptionModifier) *TypeBuilder {
+type TypeBuilderFn func(builder *TypeBuilder)
+
+func (schema *SchemaBuilder) Type(name string, builderFn TypeBuilderFn, options ...TypeBuilderOptionModifier) *TypeBuilder {
 	if schema.HasType(name) {
 		panic(fmt.Errorf("type '%s' already registered", name))
 	}
@@ -112,7 +114,7 @@ func (schema *SchemaBuilder) Type(name string, options ...TypeBuilderOptionModif
 	builder := &TypeBuilder{
 		prefixFields: true,
 		DGraphType: &DGraphType{
-			Name:       name,
+			name:       name,
 			predicates: nil,
 		},
 		schema: schema,
@@ -121,6 +123,8 @@ func (schema *SchemaBuilder) Type(name string, options ...TypeBuilderOptionModif
 	for _, modifier := range options {
 		modifier(builder)
 	}
+
+	builderFn(builder)
 
 	schema.types = append(schema.types, builder.DGraphType)
 

@@ -14,8 +14,8 @@ func TestTypeBuilder_Fields(t *testing.T) {
 		actor.Bool("married").Index()
 
 		expectedPredicates := dql.Minify(`
-			Actor.verified:bool .
-			Actor.married:bool @index() .
+			Actor.verified: bool .
+			Actor.married: bool @index() .
 		`)
 
 		expectedType := dql.Minify(`
@@ -27,11 +27,11 @@ func TestTypeBuilder_Fields(t *testing.T) {
 
 		dqlType, err := actor.ToString()
 		require.NoError(t, err)
-		require.Equal(t, expectedType, dqlType)
+		require.Equal(t, expectedType, dql.Minify(dqlType))
 
 		predicates := actor.PredicatesToString()
 		require.NoError(t, err)
-		require.Equal(t, expectedPredicates, predicates)
+		require.Equal(t, expectedPredicates, dql.Minify(predicates))
 	})
 
 	t.Run("string", func(t *testing.T) {
@@ -40,8 +40,8 @@ func TestTypeBuilder_Fields(t *testing.T) {
 		actor.String("description").IndexFulltext().IndexTerm().IndexHash().IndexTrigram().IndexExact()
 
 		expectedPredicates := dql.Minify(`
-			Actor.name:string .
-			Actor.description:string @index(fulltext,term,hash,trigram,exact) .
+			Actor.name: string .
+			Actor.description: string @index(fulltext,term,hash,trigram,exact) .
 		`)
 
 		expectedType := dql.Minify(`
@@ -53,10 +53,11 @@ func TestTypeBuilder_Fields(t *testing.T) {
 
 		dqlType, err := actor.ToString()
 		require.NoError(t, err)
-		require.Equal(t, expectedType, dqlType)
+		require.Equal(t, expectedType, dql.Minify(dqlType))
 
 		predicates := actor.PredicatesToString()
-		require.Equal(t, expectedPredicates, predicates)
+		require.NoError(t, err)
+		require.Equal(t, expectedPredicates, dql.Minify(predicates))
 	})
 
 	t.Run("int", func(t *testing.T) {
@@ -65,8 +66,8 @@ func TestTypeBuilder_Fields(t *testing.T) {
 		actor.Int("films").Index()
 
 		expectedPredicates := dql.Minify(`
-			Actor.age:int .
-			Actor.films:int @index() .
+			Actor.age: int .
+			Actor.films: int @index() .
 		`)
 
 		expectedType := dql.Minify(`
@@ -78,11 +79,11 @@ func TestTypeBuilder_Fields(t *testing.T) {
 
 		dqlType, err := actor.ToString()
 		require.NoError(t, err)
-		require.Equal(t, expectedType, dqlType)
+		require.Equal(t, expectedType, dql.Minify(dqlType))
 
 		predicates := actor.PredicatesToString()
 		require.NoError(t, err)
-		require.Equal(t, expectedPredicates, predicates)
+		require.Equal(t, expectedPredicates, dql.Minify(predicates))
 	})
 
 	t.Run("float", func(t *testing.T) {
@@ -91,8 +92,8 @@ func TestTypeBuilder_Fields(t *testing.T) {
 		actor.Float("float2").Index()
 
 		expectedPredicates := dql.Minify(`
-			Actor.float1:float .
-			Actor.float2:float @index() .
+			Actor.float1: float .
+			Actor.float2: float @index() .
 		`)
 
 		expectedType := dql.Minify(`
@@ -104,11 +105,11 @@ func TestTypeBuilder_Fields(t *testing.T) {
 
 		dqlType, err := actor.ToString()
 		require.NoError(t, err)
-		require.Equal(t, expectedType, dqlType)
+		require.Equal(t, expectedType, dql.Minify(dqlType))
 
 		predicates := actor.PredicatesToString()
 		require.NoError(t, err)
-		require.Equal(t, expectedPredicates, predicates)
+		require.Equal(t, expectedPredicates, dql.Minify(predicates))
 	})
 
 	t.Run("datetime", func(t *testing.T) {
@@ -117,8 +118,8 @@ func TestTypeBuilder_Fields(t *testing.T) {
 		actor.DateTime("married_at").IndexYear().IndexMonth().IndexDay().IndexHour().IndexDay()
 
 		expectedPredicates := dql.Minify(`
-			Actor.birthday:datetime .
-			Actor.married_at:datetime @index(year,month,day,hour) .
+			Actor.birthday: datetime .
+			Actor.married_at: datetime @index(year,month,day,hour) .
 		`)
 
 		expectedType := dql.Minify(`
@@ -130,11 +131,11 @@ func TestTypeBuilder_Fields(t *testing.T) {
 
 		dqlType, err := actor.ToString()
 		require.NoError(t, err)
-		require.Equal(t, expectedType, dqlType)
+		require.Equal(t, expectedType, dql.Minify(dqlType))
 
 		predicates := actor.PredicatesToString()
 		require.NoError(t, err)
-		require.Equal(t, expectedPredicates, predicates)
+		require.Equal(t, expectedPredicates, dql.Minify(predicates))
 	})
 
 	t.Run("password", func(t *testing.T) {
@@ -143,8 +144,8 @@ func TestTypeBuilder_Fields(t *testing.T) {
 		actor.Password("secret").Index()
 
 		expectedPredicates := dql.Minify(`
-			Actor.password:password .
-			Actor.secret:password @index() .
+			Actor.password: password .
+			Actor.secret: password @index() .
 		`)
 
 		expectedType := dql.Minify(`
@@ -156,11 +157,11 @@ func TestTypeBuilder_Fields(t *testing.T) {
 
 		dqlType, err := actor.ToString()
 		require.NoError(t, err)
-		require.Equal(t, expectedType, dqlType)
+		require.Equal(t, expectedType, dql.Minify(dqlType))
 
 		predicates := actor.PredicatesToString()
 		require.NoError(t, err)
-		require.Equal(t, expectedPredicates, predicates)
+		require.Equal(t, expectedPredicates, dql.Minify(predicates))
 	})
 
 	t.Run("uid", func(t *testing.T) {
@@ -169,8 +170,8 @@ func TestTypeBuilder_Fields(t *testing.T) {
 		actor.UID("uid").Index()
 
 		expectedPredicates := dql.Minify(`
-			Actor.id:uid .
-			Actor.uid:uid @index() .
+			Actor.id: uid .
+			Actor.uid: uid @index() .
 		`)
 
 		expectedType := dql.Minify(`
@@ -182,43 +183,46 @@ func TestTypeBuilder_Fields(t *testing.T) {
 
 		dqlType, err := actor.ToString()
 		require.NoError(t, err)
-		require.Equal(t, expectedType, dqlType)
+		require.Equal(t, expectedType, dql.Minify(dqlType))
 
 		predicates := actor.PredicatesToString()
 		require.NoError(t, err)
-		require.Equal(t, expectedPredicates, predicates)
+		require.Equal(t, expectedPredicates, dql.Minify(predicates))
 	})
 
 	t.Run("type predicate", func(t *testing.T) {
 		actor := dql.NewTypeBuilder("Actor")
 		actor.UID("id")
-		actor.Type("Film", "film")
-		actor.Type("Rewards", "rewards").Reverse().List()
+		actor.String("name").Lang()
+		actor.Type("film", "Film")
+		actor.Type("rewards", "Rewards").Reverse().List()
 
 		expectedPredicates := dql.Minify(`
-			Actor.id:uid .
-			Actor.film:Film .
-			Actor.rewards:[Rewards] @reverse .
+			Actor.id: uid .
+			Actor.name: string @lang .
+			Actor.film: uid .
+			Actor.rewards: [uid] @reverse .
 		`)
 
 		expectedType := dql.Minify(`
 			type Actor {
 				Actor.id
-				Actor.film
-				Actor.rewards
+				Actor.name
+				Actor.film: Film
+				<~Actor.rewards>: [Rewards]
 			}
 		`)
 
 		dqlType, err := actor.ToString()
 		require.NoError(t, err)
-		require.Equal(t, expectedType, dqlType)
+		require.Equal(t, expectedType, dql.Minify(dqlType))
 
 		predicates := actor.PredicatesToString()
 		require.NoError(t, err)
-		require.Equal(t, expectedPredicates, predicates)
+		require.Equal(t, expectedPredicates, dql.Minify(predicates))
 	})
 
-	// TODO: geo indexes
+	// TODO:  geo indexes
 
 	t.Run("can't register multiple QueryFields with the same name", func(t *testing.T) {
 		actor := dql.NewTypeBuilder("Actor")
@@ -234,7 +238,7 @@ func TestTypeBuilder_Fields(t *testing.T) {
 		actor.String("name")
 
 		expectedPredicates := dql.Minify(`
-			name:string .
+			name: string .
 		`)
 
 		expectedType := dql.Minify(`
@@ -245,10 +249,10 @@ func TestTypeBuilder_Fields(t *testing.T) {
 
 		dqlType, err := actor.ToString()
 		require.NoError(t, err)
-		require.Equal(t, expectedType, dqlType)
+		require.Equal(t, expectedType, dql.Minify(dqlType))
 
 		predicates := actor.PredicatesToString()
 		require.NoError(t, err)
-		require.Equal(t, expectedPredicates, predicates)
+		require.Equal(t, expectedPredicates, dql.Minify(predicates))
 	})
 }

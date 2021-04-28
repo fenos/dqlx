@@ -10,6 +10,7 @@ import (
 	"strings"
 )
 
+// FuncType represents a function type
 type FuncType string
 
 var (
@@ -19,6 +20,7 @@ var (
 	leFunc         FuncType = "le"         // Done
 	ltFunc         FuncType = "lt"         // Done
 	hasFunc        FuncType = "has"        // Done
+	typeFunc       FuncType = "type"       // Done
 	alloftermsFunc FuncType = "allofterms" // Done
 	anyoftermsFunc FuncType = "anyofterms" // Done
 	regexpFunc     FuncType = "regexp"     // Done
@@ -252,6 +254,22 @@ func HasFn(predicate string) *FilterFn {
 // Expression: has(predicate)
 func Has(predicate string) DQLizer {
 	return HasFn(predicate)
+}
+
+// TypeFn represents the type expression,
+// Expression: type(predicate)
+func TypeFn(predicate string) *FilterFn {
+	expression := filterExpr{
+		funcType: typeFunc,
+		value:    Expr(predicate),
+	}
+	return &FilterFn{expression}
+}
+
+// Type alias of TypeFn,
+// Expression: type(predicate)
+func Type(predicate string) DQLizer {
+	return TypeFn(predicate)
 }
 
 // AllOfTerms syntactic sugar for the AllOfTerms expression,

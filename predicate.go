@@ -46,12 +46,18 @@ type DGraphPredicate struct {
 }
 
 func (builder *DGraphPredicate) ToString() string {
-	predicateString := builder.name + ":"
+	predicateString := builder.name + ": "
+
+	scalarType := builder.scalarType
+
+	if !isKnownScalarType(scalarType) {
+		scalarType = ScalarUID
+	}
 
 	if builder.list {
-		predicateString += "[" + string(builder.scalarType) + "] "
+		predicateString += "[" + string(scalarType) + "] "
 	} else {
-		predicateString += string(builder.scalarType) + " "
+		predicateString += string(scalarType) + " "
 	}
 
 	if builder.index {
@@ -67,7 +73,7 @@ func (builder *DGraphPredicate) ToString() string {
 	}
 
 	if builder.lang {
-		predicateString += "@lang() "
+		predicateString += "@lang "
 	}
 
 	if builder.reverse {
@@ -109,7 +115,7 @@ func (builder *PredicateBuilder) Reverse() *PredicateBuilder {
 }
 
 type PredicateStringBuilder struct {
-	PredicateBuilder
+	*PredicateBuilder
 }
 
 func (builder *PredicateStringBuilder) HasIndex(tokenizer StringIndexTokenizer) bool {
@@ -188,4 +194,20 @@ func (builder *PredicateDateBuilder) IndexDay() *PredicateDateBuilder {
 
 func (builder *PredicateDateBuilder) IndexHour() *PredicateDateBuilder {
 	return builder.Index(TokenizerHour)
+}
+
+func isKnownScalarType(value DGraphScalar) bool {
+	switch value {
+	case
+		ScalarPassword,
+		ScalarUID,
+		ScalarGeo,
+		ScalarFloat,
+		ScalarDateTime,
+		ScalarBool,
+		ScalarInt,
+		ScalarDefault:
+		return true
+	}
+	return false
 }

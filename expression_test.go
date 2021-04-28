@@ -115,6 +115,15 @@ func TestHas(t *testing.T) {
 	})
 }
 
+func TestType(t *testing.T) {
+	t.Run("typeFn", func(t *testing.T) {
+		query, args, err := dql.TypeFn("field1").ToDQL()
+		require.NoError(t, err)
+		require.Len(t, args, 0)
+		require.Equal(t, "type(field1)", query)
+	})
+}
+
 func TestAllOfTerms(t *testing.T) {
 	t.Run("allOfTerms", func(t *testing.T) {
 		query, args, err := dql.AllOfTerms{

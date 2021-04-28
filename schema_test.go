@@ -15,26 +15,27 @@ func Test_Schema_ToDQL(t *testing.T) {
 		dqlSchema, err := schema.ToDQL()
 
 		expected := dql.Minify(`
-			name:string .
-			surname:string .
+			name: string .
+			surname: string .
 		`)
 
 		require.NoError(t, err)
-		require.Equal(t, expected, dqlSchema)
+		require.Equal(t, expected, dql.Minify(dqlSchema))
 	})
 
 	t.Run("add types and its predicates to the schema", func(t *testing.T) {
 		schema := dql.NewSchema()
 
-		author := schema.Type("Author")
-		author.String("name")
-		author.Int("age")
+		schema.Type("Author", func(author *dql.TypeBuilder) {
+			author.String("name")
+			author.Int("age")
+		})
 
 		dqlSchema, err := schema.ToDQL()
 
 		expected := dql.Minify(`
-			Author.name:string .
-			Author.age:int .
+			Author.name: string .
+			Author.age: int .
 			
 			type Author {
 				Author.name
@@ -43,7 +44,7 @@ func Test_Schema_ToDQL(t *testing.T) {
 		`)
 
 		require.NoError(t, err)
-		require.Equal(t, expected, dqlSchema)
+		require.Equal(t, expected, dql.Minify(dqlSchema))
 	})
 
 	t.Run("should not duplicate predicates", func(t *testing.T) {
@@ -59,8 +60,8 @@ func Test_Schema_ToDQL(t *testing.T) {
 		dqlSchema, err := schema.ToDQL()
 
 		expected := dql.Minify(`
-			name:string .
-			age:int .
+			name: string .
+			age: int .
 			
 			type Author {
 				name
@@ -73,6 +74,6 @@ func Test_Schema_ToDQL(t *testing.T) {
 		`)
 
 		require.NoError(t, err)
-		require.Equal(t, expected, dqlSchema)
+		require.Equal(t, expected, dql.Minify(dqlSchema))
 	})
 }

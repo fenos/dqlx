@@ -12,10 +12,10 @@ type TypeBuilder struct {
 	schema       *SchemaBuilder
 }
 
-func NewTypeBuilder(name string, options ...TypeBuilderOptionModifier) *TypeBuilder {
+func NewTypeBuilder(predicate string, options ...TypeBuilderOptionModifier) *TypeBuilder {
 	builder := &TypeBuilder{
 		DGraphType: &DGraphType{
-			Name:       name,
+			name:       predicate,
 			predicates: nil,
 		},
 		prefixFields: true,
@@ -36,13 +36,13 @@ func WithTypePrefix(usePrefix bool) TypeBuilderOptionModifier {
 	}
 }
 
-func (builder *TypeBuilder) String(name string) PredicateStringBuilder {
-	name = builder.normalizeName(name)
+func (builder *TypeBuilder) String(predicate string) PredicateStringBuilder {
+	predicate = builder.normalizeName(predicate)
 
 	field := PredicateStringBuilder{
-		PredicateBuilder: PredicateBuilder{
+		PredicateBuilder: &PredicateBuilder{
 			predicate: &DGraphPredicate{
-				name:       name,
+				name:       predicate,
 				tokenizers: nil,
 				scalarType: ScalarString,
 			},
@@ -54,13 +54,13 @@ func (builder *TypeBuilder) String(name string) PredicateStringBuilder {
 	return field
 }
 
-func (builder *TypeBuilder) DateTime(name string) *PredicateDateBuilder {
-	name = builder.normalizeName(name)
+func (builder *TypeBuilder) DateTime(predicate string) *PredicateDateBuilder {
+	predicate = builder.normalizeName(predicate)
 
 	field := &PredicateDateBuilder{
 		PredicateBuilder: &PredicateBuilder{
 			predicate: &DGraphPredicate{
-				name:       name,
+				name:       predicate,
 				tokenizers: nil,
 				scalarType: ScalarDateTime,
 			},
@@ -72,41 +72,41 @@ func (builder *TypeBuilder) DateTime(name string) *PredicateDateBuilder {
 	return field
 }
 
-func (builder *TypeBuilder) Type(kind string, name string) *PredicateBuilder {
+func (builder *TypeBuilder) Type(predicate string, kind string) *PredicateBuilder {
 	castKind := DGraphScalar(kind)
-	return builder.field(name, castKind)
+	return builder.field(predicate, castKind)
 }
 
-func (builder *TypeBuilder) UID(name string) *PredicateBuilder {
-	return builder.field(name, ScalarUID)
+func (builder *TypeBuilder) UID(predicate string) *PredicateBuilder {
+	return builder.field(predicate, ScalarUID)
 }
 
-func (builder *TypeBuilder) Int(name string) *PredicateBuilder {
-	return builder.field(name, ScalarInt)
+func (builder *TypeBuilder) Int(predicate string) *PredicateBuilder {
+	return builder.field(predicate, ScalarInt)
 }
 
-func (builder *TypeBuilder) Float(name string) *PredicateBuilder {
-	return builder.field(name, ScalarFloat)
+func (builder *TypeBuilder) Float(predicate string) *PredicateBuilder {
+	return builder.field(predicate, ScalarFloat)
 }
 
-func (builder *TypeBuilder) Bool(name string) *PredicateBuilder {
-	return builder.field(name, ScalarBool)
+func (builder *TypeBuilder) Bool(predicate string) *PredicateBuilder {
+	return builder.field(predicate, ScalarBool)
 }
 
-func (builder *TypeBuilder) Geo(name string) *PredicateBuilder {
-	return builder.field(name, ScalarGeo)
+func (builder *TypeBuilder) Geo(predicate string) *PredicateBuilder {
+	return builder.field(predicate, ScalarGeo)
 }
 
-func (builder *TypeBuilder) Password(name string) *PredicateBuilder {
-	return builder.field(name, ScalarPassword)
+func (builder *TypeBuilder) Password(predicate string) *PredicateBuilder {
+	return builder.field(predicate, ScalarPassword)
 }
 
-func (builder *TypeBuilder) field(name string, scalar DGraphScalar) *PredicateBuilder {
-	name = builder.normalizeName(name)
+func (builder *TypeBuilder) field(predicate string, scalar DGraphScalar) *PredicateBuilder {
+	predicate = builder.normalizeName(predicate)
 
 	field := &PredicateBuilder{
 		predicate: &DGraphPredicate{
-			name:       name,
+			name:       predicate,
 			tokenizers: nil,
 			scalarType: scalar,
 		},
@@ -117,21 +117,21 @@ func (builder *TypeBuilder) field(name string, scalar DGraphScalar) *PredicateBu
 	return field
 }
 
-func (builder *TypeBuilder) HasPredicate(name string) bool {
+func (builder *TypeBuilder) HasPredicate(predicateName string) bool {
 	for _, predicate := range builder.predicates {
-		if predicate.name == name {
+		if predicate.name == predicateName {
 			return true
 		}
 	}
 	return false
 }
 
-func (builder *TypeBuilder) normalizeName(name string) string {
+func (builder *TypeBuilder) normalizeName(predicate string) string {
 	if builder.prefixFields {
-		return builder.Name + "." + name
+		return builder.name + "." + predicate
 	}
 
-	return name
+	return predicate
 }
 
 func (builder *TypeBuilder) registerPredicate(predicate *DGraphPredicate) {
@@ -143,29 +143,48 @@ func (builder *TypeBuilder) registerPredicate(predicate *DGraphPredicate) {
 }
 
 type DGraphType struct {
-	Name       string
+	name       string
 	predicates []*DGraphPredicate
 }
 
 func (builder *DGraphType) ToString() (string, error) {
 	writer := bytes.Buffer{}
-	writer.WriteString("type " + builder.Name + " {")
+	writer.WriteString("type " + builder.name + " { ")
 
 	// make sure duplicate QueryFields are not allowed
 	registeredPredicates := map[string]bool{}
+	fields := make([]string, 0, len(builder.predicates))
 
 	for _, field := range builder.predicates {
 
 		if _, ok := registeredPredicates[field.name]; ok {
-			return "", fmt.Errorf("predicate '%s' already registered on type '%s'", field.name, builder.Name)
+			return "", fmt.Errorf("predicate '%s' already registered on type '%s'", field.name, builder.name)
 		}
 
-		writer.WriteString(" " + field.name + "")
+		predicate := field.name
+		if field.reverse {
+			if isKnownScalarType(field.scalarType) {
+				return "", fmt.Errorf("attempted to use a reverse field on a scalar value on field '%s'", field.name)
+			}
+
+			predicate = fmt.Sprintf("<~%s>", field.name)
+		}
+
+		if !isKnownScalarType(field.scalarType) {
+			if field.list {
+				predicate += fmt.Sprintf(": [%s]", field.scalarType)
+			} else {
+				predicate += fmt.Sprintf(": %s", field.scalarType)
+			}
+		}
+
+		fields = append(fields, predicate)
 
 		registeredPredicates[field.name] = true
 	}
 
-	writer.WriteString(" }")
+	writer.WriteString(strings.Join(fields, "\n"))
+	writer.WriteString("\n}")
 
 	return writer.String(), nil
 }
