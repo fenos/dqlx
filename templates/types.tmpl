@@ -1,0 +1,24 @@
+// Code auto-generated from deku DO NOT EDIT
+
+package {{ .PackageName }}
+
+{{ range $element := .Imports -}}
+    import "{{ $element -}}"
+{{- end }}
+
+
+{{range $element := .Types}}
+    var {{ $element.Name }}Fields = []string{
+        {{- range $i, $field := .Fields}}
+            "{{ $field.JsonName }}",
+        {{- end}}
+    }
+
+    var {{ $element.Name }}Type = "{{ $element.Name }}"
+
+    type {{ $element.Name }} struct {
+    {{- range $i, $field := .Fields}}
+        {{ $field.Name }} {{ $field.GoType }} {{if $field.JsonName}} `json:"{{ $field.JsonName }},omitempty"`{{- end}}
+    {{- end}}
+}
+{{end}}

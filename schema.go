@@ -7,14 +7,14 @@ import (
 )
 
 type SchemaBuilder struct {
-	predicates []*DGraphPredicate
-	types      []*DGraphType
+	Predicates []*DGraphPredicate
+	Types      []*DGraphType
 }
 
 func NewSchema() *SchemaBuilder {
 	return &SchemaBuilder{
-		predicates: nil,
-		types:      nil,
+		Predicates: nil,
+		Types:      nil,
 	}
 }
 
@@ -49,18 +49,18 @@ func (schema *SchemaBuilder) PredicatesToString() (string, error) {
 	registeredPredicates := map[string]*DGraphPredicate{}
 
 	var predicates []string
-	for _, predicate := range schema.predicates {
+	for _, predicate := range schema.Predicates {
 
-		if registeredPredicate, ok := registeredPredicates[predicate.name]; ok {
-			if registeredPredicate.scalarType != predicate.scalarType {
-				return "", fmt.Errorf("Predicate '%s' already registered with a different scalar type '%s'", predicate.name, registeredPredicate.scalarType)
+		if registeredPredicate, ok := registeredPredicates[predicate.Name]; ok {
+			if registeredPredicate.ScalarType != predicate.ScalarType {
+				return "", fmt.Errorf("Predicate '%s' already registered with a different scalar type '%s'", predicate.Name, registeredPredicate.ScalarType)
 			}
 			continue
 		}
 
 		predicates = append(predicates, predicate.ToString())
 
-		registeredPredicates[predicate.name] = predicate
+		registeredPredicates[predicate.Name] = predicate
 	}
 
 	writer.WriteString(strings.Join(predicates, "\n"))
@@ -70,8 +70,8 @@ func (schema *SchemaBuilder) PredicatesToString() (string, error) {
 func (schema *SchemaBuilder) TypesToString() (string, error) {
 	writer := bytes.Buffer{}
 
-	types := make([]string, len(schema.types))
-	for index, dType := range schema.types {
+	types := make([]string, len(schema.Types))
+	for index, dType := range schema.Types {
 		dqlExpression, err := dType.ToString()
 
 		if err != nil {
@@ -87,7 +87,7 @@ func (schema *SchemaBuilder) TypesToString() (string, error) {
 }
 
 func (schema *SchemaBuilder) HasType(name string) bool {
-	for _, schemaType := range schema.types {
+	for _, schemaType := range schema.Types {
 		if schemaType.name == name {
 			return true
 		}
@@ -96,8 +96,8 @@ func (schema *SchemaBuilder) HasType(name string) bool {
 }
 
 func (schema *SchemaBuilder) HasPredicate(name string) bool {
-	for _, predicate := range schema.predicates {
-		if predicate.name == name {
+	for _, predicate := range schema.Predicates {
+		if predicate.Name == name {
 			return true
 		}
 	}
@@ -126,7 +126,7 @@ func (schema *SchemaBuilder) Type(name string, builderFn TypeBuilderFn, options 
 
 	builderFn(builder)
 
-	schema.types = append(schema.types, builder.DGraphType)
+	schema.Types = append(schema.Types, builder.DGraphType)
 
 	return builder
 }
@@ -134,12 +134,12 @@ func (schema *SchemaBuilder) Type(name string, builderFn TypeBuilderFn, options 
 func (schema *SchemaBuilder) Predicate(name string, scalar DGraphScalar) *PredicateBuilder {
 	builder := &PredicateBuilder{
 		predicate: &DGraphPredicate{
-			name:       name,
-			scalarType: scalar,
+			Name:       name,
+			ScalarType: scalar,
 		},
 	}
 
-	schema.predicates = append(schema.predicates, builder.predicate)
+	schema.Predicates = append(schema.Predicates, builder.predicate)
 
 	return builder
 }

@@ -42,9 +42,9 @@ func (builder *TypeBuilder) String(predicate string) PredicateStringBuilder {
 	field := PredicateStringBuilder{
 		PredicateBuilder: &PredicateBuilder{
 			predicate: &DGraphPredicate{
-				name:       predicate,
-				tokenizers: nil,
-				scalarType: ScalarString,
+				Name:       predicate,
+				Tokenizers: nil,
+				ScalarType: ScalarString,
 			},
 		},
 	}
@@ -60,9 +60,9 @@ func (builder *TypeBuilder) DateTime(predicate string) *PredicateDateBuilder {
 	field := &PredicateDateBuilder{
 		PredicateBuilder: &PredicateBuilder{
 			predicate: &DGraphPredicate{
-				name:       predicate,
-				tokenizers: nil,
-				scalarType: ScalarDateTime,
+				Name:       predicate,
+				Tokenizers: nil,
+				ScalarType: ScalarDateTime,
 			},
 		},
 	}
@@ -106,9 +106,9 @@ func (builder *TypeBuilder) field(predicate string, scalar DGraphScalar) *Predic
 
 	field := &PredicateBuilder{
 		predicate: &DGraphPredicate{
-			name:       predicate,
-			tokenizers: nil,
-			scalarType: scalar,
+			Name:       predicate,
+			Tokenizers: nil,
+			ScalarType: scalar,
 		},
 	}
 
@@ -119,7 +119,7 @@ func (builder *TypeBuilder) field(predicate string, scalar DGraphScalar) *Predic
 
 func (builder *TypeBuilder) HasPredicate(predicateName string) bool {
 	for _, predicate := range builder.predicates {
-		if predicate.name == predicateName {
+		if predicate.Name == predicateName {
 			return true
 		}
 	}
@@ -136,7 +136,7 @@ func (builder *TypeBuilder) normalizeName(predicate string) string {
 
 func (builder *TypeBuilder) registerPredicate(predicate *DGraphPredicate) {
 	if builder.schema != nil {
-		builder.schema.predicates = append(builder.schema.predicates, predicate)
+		builder.schema.Predicates = append(builder.schema.Predicates, predicate)
 	}
 
 	builder.predicates = append(builder.predicates, predicate)
@@ -157,30 +157,30 @@ func (builder *DGraphType) ToString() (string, error) {
 
 	for _, field := range builder.predicates {
 
-		if _, ok := registeredPredicates[field.name]; ok {
-			return "", fmt.Errorf("predicate '%s' already registered on type '%s'", field.name, builder.name)
+		if _, ok := registeredPredicates[field.Name]; ok {
+			return "", fmt.Errorf("predicate '%s' already registered on type '%s'", field.Name, builder.name)
 		}
 
-		predicate := field.name
-		if field.reverse {
-			if isKnownScalarType(field.scalarType) {
-				return "", fmt.Errorf("attempted to use a reverse field on a scalar value on field '%s'", field.name)
+		predicate := field.Name
+		if field.Reverse {
+			if isKnownScalarType(field.ScalarType) {
+				return "", fmt.Errorf("attempted to use a reverse field on a scalar value on field '%s'", field.Name)
 			}
 
-			predicate = fmt.Sprintf("<~%s>", field.name)
+			predicate = fmt.Sprintf("<~%s>", field.Name)
 		}
 
-		if !isKnownScalarType(field.scalarType) {
-			if field.list {
-				predicate += fmt.Sprintf(": [%s]", field.scalarType)
+		if !isKnownScalarType(field.ScalarType) {
+			if field.List {
+				predicate += fmt.Sprintf(": [%s]", field.ScalarType)
 			} else {
-				predicate += fmt.Sprintf(": %s", field.scalarType)
+				predicate += fmt.Sprintf(": %s", field.ScalarType)
 			}
 		}
 
 		fields = append(fields, predicate)
 
-		registeredPredicates[field.name] = true
+		registeredPredicates[field.Name] = true
 	}
 
 	writer.WriteString(strings.Join(fields, "\n"))

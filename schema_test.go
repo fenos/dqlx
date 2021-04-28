@@ -23,7 +23,7 @@ func Test_Schema_ToDQL(t *testing.T) {
 		require.Equal(t, expected, dql.Minify(dqlSchema))
 	})
 
-	t.Run("add types and its predicates to the schema", func(t *testing.T) {
+	t.Run("add types and its Predicates to the schema", func(t *testing.T) {
 		schema := dql.NewSchema()
 
 		schema.Type("Author", func(author *dql.TypeBuilder) {
@@ -47,7 +47,7 @@ func Test_Schema_ToDQL(t *testing.T) {
 		require.Equal(t, expected, dql.Minify(dqlSchema))
 	})
 
-	t.Run("should not duplicate predicates", func(t *testing.T) {
+	t.Run("should not duplicate Predicates", func(t *testing.T) {
 		schema := dql.NewSchema()
 
 		author := schema.Type("Author", dql.WithTypePrefix(false))
