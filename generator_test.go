@@ -1,32 +1,37 @@
 package deku_test
 
 import (
-	"github.com/fenos/deku"
+	dql "github.com/fenos/deku"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
 
 func TestGenerateTypes(t *testing.T) {
-	schema := deku.NewSchema()
+	t.Skipf("Working Progress")
+	schema := dql.NewSchema()
 
-	schema.Type("User", func(user *deku.TypeBuilder) {
+	schema.Type("User", func(user *dql.TypeBuilder) {
 		user.String("name")
 		user.String("surname")
-		user.Bool("verified")
-		user.DateTime("created_at")
-		user.Int("age")
-		user.Float("score")
+		user.DateTime("birthday")
 		user.Password("password")
-		user.Type("posts", "Post").List()
 	})
 
-	schema.Type("Post", func(post *deku.TypeBuilder) {
-		post.String("title")
-		post.String("description")
-		post.Type("user", "User").Reverse()
+	schema.Type("Tag", func(tag *dql.TypeBuilder) {
+		tag.String("name")
+		tag.Type("posts", "Post").Reverse()
 	})
 
-	err := deku.GenerateTypes(schema, deku.GeneratorOption{
+	schema.Type("Post", func(post *dql.TypeBuilder) {
+		post.String("title").Lang()
+		post.String("content")
+		post.Bool("published")
+		post.DateTime("created_at")
+		post.Type("tags", "Tag").Reverse().List()
+		post.Int("views")
+	})
+
+	err := dql.GenerateTypes(schema, dql.GeneratorOption{
 		Path:        "C:\\Users\\fabri\\go\\src\\deku\\t.go",
 		PackageName: "deku",
 	})

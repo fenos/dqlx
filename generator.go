@@ -18,7 +18,7 @@ var typesTmpl string
 type templateTypesVariables struct {
 	PackageName string
 	Types       []TemplateType
-	Imports     []string
+	Imports     map[string]bool
 }
 
 type TemplateType struct {
@@ -67,9 +67,9 @@ func GenerateTypes(schema *SchemaBuilder, options GeneratorOption) error {
 	return ioutil.WriteFile(options.Path, formattedCode, fs.ModePerm)
 }
 
-func getTypeDefinition(schema *SchemaBuilder) ([]TemplateType, []string) {
+func getTypeDefinition(schema *SchemaBuilder) ([]TemplateType, map[string]bool) {
 	types := make([]TemplateType, len(schema.Types))
-	var imports []string
+	imports := map[string]bool{}
 
 	for index, dType := range schema.Types {
 		templateType := TemplateType{
@@ -80,7 +80,7 @@ func getTypeDefinition(schema *SchemaBuilder) ([]TemplateType, []string) {
 		// Add fields
 		for _, predicate := range dType.predicates {
 			if predicate.ScalarType == ScalarDateTime {
-				imports = append(imports, "time")
+				imports["time"] = true
 			}
 
 			predicateType := dgraphScalarToGoType(predicate.ScalarType)

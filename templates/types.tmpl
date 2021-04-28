@@ -2,9 +2,11 @@
 
 package {{ .PackageName }}
 
-{{ range $element := .Imports -}}
-    import "{{ $element -}}"
+import (
+{{ range $i, $element := .Imports -}}
+     "{{ $i }}"
 {{- end }}
+)
 
 
 {{range $element := .Types}}
