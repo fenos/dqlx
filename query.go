@@ -183,12 +183,16 @@ func (builder QueryBuilder) WithDClient(client *dgo.Dgraph) QueryBuilder {
 	return builder
 }
 
-func (builder QueryBuilder) Execute(ctx context.Context, options ...ExecutorOptionFn) (*QueryResponse, error) {
+func (builder QueryBuilder) Execute(ctx context.Context, options ...ExecutorOptionFn) (*Response, error) {
 	executor := NewDGoExecutor(builder.client)
 
 	for _, option := range options {
 		option(executor)
 	}
+
+	defer func() {
+		builder.unmarshalInto = nil
+	}()
 
 	return executor.ExecuteQueries(ctx, builder)
 }
@@ -222,4 +226,8 @@ func (builder QueryBuilder) addEdgeFn(query QueryBuilder, fn func(builder QueryB
 	builder.childrenEdges[parentPath] = append(builder.childrenEdges[parentPath], edgeBuilder)
 
 	return builder
+}
+
+func IsEmptyQuery(query string) bool {
+	return "query () {  {  } }" == query
 }

@@ -15,16 +15,20 @@ type DQLizer interface {
 }
 
 type Executor interface {
-	ExecuteQueries(ctx context.Context, queries ...QueryBuilder) (*QueryResponse, error)
+	ExecuteQueries(ctx context.Context, queries ...QueryBuilder) (*Response, error)
+	ExecuteMutations(ctx context.Context, mutations ...MutationBuilder) (*Response, error)
 }
 
 type Dqlx interface {
 	Query(rootFn *FilterFn) QueryBuilder
 	QueryType(typeName string) QueryBuilder
 	QueryEdge(edgeName string, rootQueryFn *FilterFn) QueryBuilder
-	Variable(rootQueryFn *FilterFn) QueryBuilder
 
-	ExecuteQueries(ctx context.Context, queries []QueryBuilder, options ...ExecutorOptionFn) (*QueryResponse, error)
+	Mutation() MutationBuilder
+
+	ExecuteQueries(ctx context.Context, queries []QueryBuilder, options ...ExecutorOptionFn) (*Response, error)
+
+	Variable(rootQueryFn *FilterFn) QueryBuilder
 	NewTxn() *dgo.Txn
 	NewReadOnlyTxn() *dgo.Txn
 }
@@ -69,12 +73,24 @@ func (dqlx *dqlx) Variable(rootQueryFn *FilterFn) QueryBuilder {
 	return Variable(rootQueryFn).WithDClient(dqlx.dgraph)
 }
 
-func (dqlx *dqlx) ExecuteQueries(ctx context.Context, queries []QueryBuilder, options ...ExecutorOptionFn) (*QueryResponse, error) {
+func (dqlx *dqlx) Mutation() MutationBuilder {
+	return Mutation().WithDClient(dqlx.dgraph)
+}
+
+func (dqlx *dqlx) ExecuteQueries(ctx context.Context, queries []QueryBuilder, options ...ExecutorOptionFn) (*Response, error) {
 	executor := NewDGoExecutor(dqlx.dgraph)
 	for _, option := range options {
 		option(executor)
 	}
 	return executor.ExecuteQueries(ctx, queries...)
+}
+
+func (dqlx *dqlx) ExecuteMutations(ctx context.Context, mutations []MutationBuilder, options ...ExecutorOptionFn) (*Response, error) {
+	executor := NewDGoExecutor(dqlx.dgraph)
+	for _, option := range options {
+		option(executor)
+	}
+	return executor.ExecuteMutations(ctx, mutations...)
 }
 
 func (dqlx *dqlx) NewTxn() *dgo.Txn {

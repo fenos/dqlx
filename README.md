@@ -29,7 +29,7 @@ dqlx tries to simplify the interaction with DGraph by helping to construct Queri
 - [x] Query Variables
 - [x] Values Variables
 - [x] Facets
-- [ ] Mutations
+- [x] Mutations
 
 ## Getting Started
 

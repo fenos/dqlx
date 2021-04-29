@@ -56,7 +56,9 @@ func (grammar queryOperation) ToDQL() (query string, variables map[string]string
 
 	innerQuery := strings.Join(statements, " ")
 
-	query, rawVariables := replacePlaceholders(innerQuery, args)
+	query, rawVariables := replacePlaceholders(innerQuery, args, func(index int, value interface{}) string {
+		return fmt.Sprintf("$%d", index)
+	})
 	variables, placeholders := toVariables(rawVariables)
 
 	writer := bytes.Buffer{}
@@ -76,19 +78,23 @@ func toVariables(rawVariables map[int]interface{}) (variables map[string]string,
 	// Format Variables
 	for index, placeholderName := range queryPlaceholderNames {
 		variableName := fmt.Sprintf("$%d", placeholderName)
-		switch val := rawVariables[placeholderName].(type) {
-		case time.Time:
-			variables[variableName] = val.Format(time.RFC3339)
-		case *time.Time:
-			variables[variableName] = val.Format(time.RFC3339)
-		default:
-			variables[variableName] = fmt.Sprintf("%v", rawVariables[placeholderName])
-		}
 
+		variables[variableName] = toVariableValue(rawVariables[index])
 		placeholders[index] = fmt.Sprintf("$%d:%s", placeholderName, goTypeToDQLType(rawVariables[placeholderName]))
 	}
 
 	return variables, placeholders
+}
+
+func toVariableValue(value interface{}) string {
+	switch val := value.(type) {
+	case time.Time:
+		return val.Format(time.RFC3339)
+	case *time.Time:
+		return val.Format(time.RFC3339)
+	default:
+		return fmt.Sprintf("%v", val)
+	}
 }
 
 func ensureUniqueQueryNames(queries []QueryBuilder) []QueryBuilder {
@@ -124,7 +130,7 @@ func goTypeToDQLType(value interface{}) string {
 	return "string"
 }
 
-func replacePlaceholders(query string, args []interface{}) (string, map[int]interface{}) {
+func replacePlaceholders(query string, args []interface{}, transform func(index int, value interface{}) string) (string, map[int]interface{}) {
 	variables := map[int]interface{}{}
 	buf := &bytes.Buffer{}
 	i := 0
@@ -136,7 +142,7 @@ func replacePlaceholders(query string, args []interface{}) (string, map[int]inte
 		}
 
 		buf.WriteString(query[:p])
-		key := fmt.Sprintf("$%d", i)
+		key := transform(i, args[i])
 		buf.WriteString(key)
 		query = query[p+2:]
 
