@@ -1,4 +1,4 @@
-module github.com/fenos/deku
+module github.com/fenos/dqlx
 
 go 1.16
 

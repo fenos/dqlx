@@ -1,7 +1,7 @@
-package deku_test
+package dqlx_test
 
 import (
-	dql "github.com/fenos/deku"
+	dql "github.com/fenos/dqlx"
 	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
@@ -311,17 +311,6 @@ func Test_Query_Pagination(t *testing.T) {
 	`)
 
 	require.Equal(t, expected, query)
-}
-
-func TestDebug(t *testing.T) {
-	variable := dql.Variable(dql.EqFn("name", "test")).
-		Edge("film").
-		Edge("film->performance", dql.Fields(`
-			 D AS genre
-		`))
-
-	a, _, _ := variable.ToDQL()
-	println(a)
 }
 
 func Test_Query_Variable(t *testing.T) {

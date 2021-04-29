@@ -1,13 +1,13 @@
-package deku_test
+package dqlx_test
 
 import (
-	dql "github.com/fenos/deku"
+	dql "github.com/fenos/dqlx"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
 
 func TestGenerateTypes(t *testing.T) {
-	//t.Skipf("Working Progress")
+	t.Skipf("Working Progress")
 	schema := dql.NewSchema()
 
 	schema.Type("User", func(user *dql.TypeBuilder) {
@@ -32,8 +32,8 @@ func TestGenerateTypes(t *testing.T) {
 	})
 
 	err := dql.GenerateTypes(schema, dql.GeneratorOption{
-		Path:        "C:\\Users\\fabri\\go\\src\\deku\\t.go",
-		PackageName: "deku",
+		Path:        "C:\\Users\\fabri\\go\\src\\dqlx\\t.go",
+		PackageName: "dqlx",
 	})
 
 	require.NoError(t, err)

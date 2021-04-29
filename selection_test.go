@@ -1,4 +1,4 @@
-package deku_test
+package dqlx_test
 
 import (
 	"testing"

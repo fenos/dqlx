@@ -1,4 +1,4 @@
-package deku
+package dqlx
 
 import (
 	"strings"

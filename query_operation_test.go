@@ -1,7 +1,7 @@
-package deku_test
+package dqlx_test
 
 import (
-	dql "github.com/fenos/deku"
+	dql "github.com/fenos/dqlx"
 	"github.com/stretchr/testify/require"
 	"testing"
 )

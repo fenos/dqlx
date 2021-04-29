@@ -1,7 +1,6 @@
-# Deku
----
+# dqlx
 
-Deku is a [DGraph](https://github.com/dgraph-io/dgraph) query builder 🦸 </br>
+dqlx is a [DGraph](https://github.com/dgraph-io/dgraph) query builder </br>
 Compose fluently complex and dynamic DGraph queries & mutations!
 
 ---
@@ -14,7 +13,7 @@ The DGraph query language is awesome! it is really powerful, and you can achieve
 However, as you start trying to add dynamicity (like any other declarative query language) you soon starts
 fiddling with a lot strings concatenations and can quickly get messy.
 
-Deku tries to simplify the construction of DGraph Queries and mutations with a fluent API.
+dqlx tries to simplify the interaction with DGraph by helping to construct Queries and mutations with a fluent API.
 
 ### Features
 
@@ -38,7 +37,7 @@ Deku tries to simplify the construction of DGraph Queries and mutations with a f
 
 ### Installation
 ```bash
-go get github.com/fenos/deku
+go get github.com/fenos/dqlx
 ```
 
 ### Quick Overview
@@ -72,7 +71,7 @@ query Bladerunner($0:string, $1:string) {
 }
 ```
 
-The true power of **Deku** shows when you start getting serious
+The true power of **dqlx** shows when you start getting serious
 
 ```go
 query, variables, err := dql.
@@ -131,7 +130,7 @@ query Bladerunner($0:string, $1:int, $2:int, $3:int, $4:int, $5:int) {
 
 Not yet convinced?
 
-Check the [Test Cases](https://github.com/fenos/deku/blob/main/query_test.go) until the full documentation is ready
+Check the [Test Cases](https://github.com/fenos/dqlx/blob/main/query_test.go) until the full documentation is ready
 
 ### Licence
 MIT
