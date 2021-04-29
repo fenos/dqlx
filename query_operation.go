@@ -55,17 +55,26 @@ func (grammar queryOperation) ToDQL() (query string, variables map[string]string
 
 	innerQuery := strings.Join(statements, " ")
 
-	query, rawVariables, err := replacePlaceholders(innerQuery, args)
+	query, rawVariables := replacePlaceholders(innerQuery, args)
+	variables, placeholders := toQueryVariables(rawVariables)
 
-	if err != nil {
-		return
-	}
+	writer := bytes.Buffer{}
+	writer.WriteString(fmt.Sprintf("query %s(%s) {", queryName, strings.Join(placeholders, ", ")))
+	writer.WriteString(" " + query)
+	writer.WriteString(" }")
+
+	return writer.String(), variables, nil
+}
+
+func toQueryVariables(rawVariables map[int]interface{}) (variables map[string]string, placeholders []string) {
+	variables = map[string]string{}
+	placeholders = make([]string, len(rawVariables))
 
 	queryPlaceholderNames := getSortedVariables(rawVariables)
-	placeholders := make([]string, len(queryPlaceholderNames))
 
+	// Format Variables
 	for index, placeholderName := range queryPlaceholderNames {
-		variableName := fmt.Sprintf("$%s", placeholderName)
+		variableName := fmt.Sprintf("$%d", placeholderName)
 		switch val := rawVariables[placeholderName].(type) {
 		case time.Time:
 			variables[variableName] = val.Format(time.RFC3339)
@@ -75,15 +84,10 @@ func (grammar queryOperation) ToDQL() (query string, variables map[string]string
 			variables[variableName] = fmt.Sprintf("%v", rawVariables[placeholderName])
 		}
 
-		placeholders[index] = fmt.Sprintf("$%s:%s", placeholderName, goTypeToDQLType(rawVariables[placeholderName]))
+		placeholders[index] = fmt.Sprintf("$%d:%s", placeholderName, goTypeToDQLType(rawVariables[placeholderName]))
 	}
 
-	writer := bytes.Buffer{}
-	writer.WriteString(fmt.Sprintf("query %s(%s) {", queryName, strings.Join(placeholders, ", ")))
-	writer.WriteString(" " + query)
-	writer.WriteString(" }")
-
-	return writer.String(), variables, nil
+	return variables, placeholders
 }
 
 func goTypeToDQLType(value interface{}) string {
@@ -103,8 +107,8 @@ func goTypeToDQLType(value interface{}) string {
 	return "string"
 }
 
-func replacePlaceholders(query string, args []interface{}) (string, map[string]interface{}, error) {
-	variables := map[string]interface{}{}
+func replacePlaceholders(query string, args []interface{}) (string, map[int]interface{}) {
+	variables := map[int]interface{}{}
 	buf := &bytes.Buffer{}
 	i := 0
 
@@ -115,18 +119,18 @@ func replacePlaceholders(query string, args []interface{}) (string, map[string]i
 		}
 
 		buf.WriteString(query[:p])
-		key := fmt.Sprintf("%d", i)
-		buf.WriteString("$" + key)
+		key := fmt.Sprintf("$%d", i)
+		buf.WriteString(key)
 		query = query[p+2:]
 
 		// Assign the variables
-		variables[key] = args[i]
+		variables[i] = args[i]
 
 		i++
 	}
 
 	buf.WriteString(query)
-	return buf.String(), variables, nil
+	return buf.String(), variables
 }
 
 func isListType(val interface{}) bool {

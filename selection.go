@@ -6,9 +6,10 @@ import (
 )
 
 type selectionSet struct {
-	Fields []string
-	Parent *edge
-	Edges  map[string][]QueryBuilder
+	Fields          []string
+	ParentName      string
+	Edges           map[string][]QueryBuilder
+	HasParentFields bool
 }
 
 func (selection selectionSet) ToDQL() (query string, args []interface{}, err error) {
@@ -25,7 +26,7 @@ func (selection selectionSet) ToDQL() (query string, args []interface{}, err err
 	writer.WriteString(strings.Join(fieldNames, " "))
 
 	// nested childrenEdges
-	nestedEdges, ok := selection.Edges[selection.Parent.Name]
+	nestedEdges, ok := selection.Edges[selection.ParentName]
 
 	if !ok {
 		return writer.String(), args, nil
@@ -43,8 +44,8 @@ func (selection selectionSet) ToDQL() (query string, args []interface{}, err err
 		statements = append(statements, nestedEdge)
 	}
 
-	// Add a space if parent fields are there
-	if selection.Parent != nil && len(selection.Parent.Selection.Fields) > 0 {
+	// add a space if parent fields are present
+	if selection.HasParentFields {
 		writer.WriteString(" ")
 	}
 
@@ -53,10 +54,25 @@ func (selection selectionSet) ToDQL() (query string, args []interface{}, err err
 	return writer.String(), args, nil
 }
 
-type Fields string
+type fields struct {
+	predicates []string
+}
 
-func (fields Fields) ToDQL() (query string, args []interface{}, err error) {
-	return string(fields), nil, nil
+func Fields(fieldNames ...string) DQLizer {
+	var allFields []string
+
+	for _, field := range fieldNames {
+		combinedFields := strings.Fields(field)
+		allFields = append(allFields, combinedFields...)
+	}
+
+	return fields{
+		predicates: allFields,
+	}
+}
+
+func (fields fields) ToDQL() (query string, args []interface{}, err error) {
+	return strings.Join(fields.predicates, " "), nil, nil
 }
 
 func FieldList(fields []string) string {

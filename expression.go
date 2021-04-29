@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
-	"strconv"
 	"strings"
 )
 
@@ -760,16 +759,12 @@ func parseValue(value interface{}) (valuePlaceholder string, args []interface{},
 	return
 }
 
-func getSortedVariables(exp map[string]interface{}) []string {
-	sortedKeys := make([]string, 0, len(exp))
+func getSortedVariables(exp map[int]interface{}) []int {
+	sortedKeys := make([]int, 0, len(exp))
 	for k := range exp {
 		sortedKeys = append(sortedKeys, k)
 	}
-	sort.Slice(sortedKeys, func(i, j int) bool {
-		numA, _ := strconv.Atoi(sortedKeys[i])
-		numB, _ := strconv.Atoi(sortedKeys[j])
-		return numA < numB
-	})
+	sort.Ints(sortedKeys)
 	return sortedKeys
 }
 

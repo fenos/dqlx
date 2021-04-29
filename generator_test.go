@@ -7,7 +7,7 @@ import (
 )
 
 func TestGenerateTypes(t *testing.T) {
-	t.Skipf("Working Progress")
+	//t.Skipf("Working Progress")
 	schema := dql.NewSchema()
 
 	schema.Type("User", func(user *dql.TypeBuilder) {

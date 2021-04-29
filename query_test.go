@@ -9,7 +9,7 @@ import (
 
 func Test_Simple_Query(t *testing.T) {
 	query, variables, err := dql.
-		Query("bladerunner", dql.EqFn("item", "value")).
+		QueryEdge("bladerunner", dql.EqFn("item", "value")).
 		Fields(`
 			uid
 			name
@@ -41,7 +41,7 @@ func Test_Simple_Query(t *testing.T) {
 
 func Test_Query_Nested(t *testing.T) {
 	query, variables, err := dql.
-		Query("bladerunner", dql.EqFn("name@en", "Blade Runner")).
+		QueryEdge("bladerunner", dql.EqFn("name@en", "Blade Runner")).
 		Fields(`
 			uid
 			name
@@ -105,7 +105,7 @@ func Test_Query_Nested(t *testing.T) {
 
 func Test_Query_Filter_Nested(t *testing.T) {
 	query, variables, err := dql.
-		Query("bladerunner", dql.EqFn("name@en", "Blade Runner")).
+		QueryEdge("bladerunner", dql.EqFn("name@en", "Blade Runner")).
 		Fields(`
 			uid
 			name
@@ -170,7 +170,7 @@ func Test_Query_Filter_Nested(t *testing.T) {
 
 func Test_Query_Connecting_Filter(t *testing.T) {
 	query, variables, err := dql.
-		Query("bladerunner", dql.EqFn("name@en", "Blade Runner")).
+		QueryEdge("bladerunner", dql.EqFn("name@en", "Blade Runner")).
 		Fields(`
 			uid
 			name
@@ -231,7 +231,7 @@ func Test_Query_Connecting_Filter(t *testing.T) {
 
 func Test_Query_Pagination(t *testing.T) {
 	query, variables, err := dql.
-		Query("bladerunner", dql.EqFn("name@en", "Blade Runner")).
+		QueryEdge("bladerunner", dql.EqFn("name@en", "Blade Runner")).
 		Fields(`
 			uid
 			name
@@ -313,6 +313,17 @@ func Test_Query_Pagination(t *testing.T) {
 	require.Equal(t, expected, query)
 }
 
+func TestDebug(t *testing.T) {
+	variable := dql.Variable(dql.EqFn("name", "test")).
+		Edge("film").
+		Edge("film->performance", dql.Fields(`
+			 D AS genre
+		`))
+
+	a, _, _ := variable.ToDQL()
+	println(a)
+}
+
 func Test_Query_Variable(t *testing.T) {
 	variable := dql.Variable(dql.EqFn("name", "test")).
 		Edge("film").
@@ -321,7 +332,7 @@ func Test_Query_Variable(t *testing.T) {
 		`))
 
 	query, variables, err := dql.
-		Query("bladerunner", dql.EqFn("item", "value")).
+		QueryEdge("bladerunner", dql.EqFn("item", "value")).
 		Fields(`
 			uid
 			name
@@ -368,7 +379,7 @@ func Test_Query_Value_Variable(t *testing.T) {
 		`))
 
 	query, _, err := dql.
-		Query("bladerunner", dql.EqFn("item", "value")).
+		QueryEdge("bladerunner", dql.EqFn("item", "value")).
 		Fields(`
 			uid
 			name
@@ -405,7 +416,7 @@ func Test_Query_Value_Variable(t *testing.T) {
 
 func Test_Query_OrderBy(t *testing.T) {
 	query, variables, err := dql.
-		Query("bladerunner", dql.EqFn("item", "value")).
+		QueryEdge("bladerunner", dql.EqFn("item", "value")).
 		Fields(`
 			uid
 			name
@@ -451,7 +462,7 @@ func Test_Query_GroupBy(t *testing.T) {
 		`), dql.GroupBy("genre"))
 
 	query, variables, err := dql.
-		Query("bladerunner", dql.EqFn("item", "value")).
+		QueryEdge("bladerunner", dql.EqFn("item", "value")).
 		Fields(`
 			uid
 			name
@@ -495,7 +506,7 @@ func Test_Query_GroupBy(t *testing.T) {
 
 func Test_Query_Facets(t *testing.T) {
 	query, variables, err := dql.
-		Query("bladerunner", dql.EqFn("item", "value")).
+		QueryEdge("bladerunner", dql.EqFn("item", "value")).
 		Facets().
 		Fields(`
 			uid
@@ -536,13 +547,13 @@ func Test_Query_Facets(t *testing.T) {
 }
 
 func Test_Query_Edge_From_Query(t *testing.T) {
-	edge := dql.Query("actors->rewards->venues", nil).
+	edge := dql.QueryEdge("actors->rewards->venues", nil).
 		Fields(`
 			street
 		`)
 
 	query, variables, err := dql.
-		Query("bladerunner", dql.EqFn("name@en", "Blade Runner")).
+		QueryEdge("bladerunner", dql.EqFn("name@en", "Blade Runner")).
 		Fields(`
 			uid
 			name
@@ -608,7 +619,7 @@ func Test_List_function_Query(t *testing.T) {
 	to := time.Date(2021, 04, 28, 0, 0, 0, 0, time.UTC)
 
 	query, variables, err := dql.
-		Query("bladerunner", dql.UIDFn("value")).
+		QueryEdge("bladerunner", dql.UIDFn("value")).
 		Fields(`
 			uid
 			name

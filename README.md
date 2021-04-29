@@ -46,7 +46,7 @@ go get github.com/fenos/deku
 Here is how you produce a **super simple** query:
 ```go
 query, variables, err := dql.
-    Query("bladerunner", dql.EqFn("item", "value")).
+    QueryEdge("bladerunner", dql.EqFn("item", "value")).
     Fields(`
         uid
         name
@@ -76,7 +76,7 @@ The true power of **Deku** shows when you start getting serious
 
 ```go
 query, variables, err := dql.
-    Query("bladerunner", dql.EqFn("name@en", "Blade Runner")).
+    QueryEdge("bladerunner", dql.EqFn("name@en", "Blade Runner")).
     Fields(`
         uid
         name

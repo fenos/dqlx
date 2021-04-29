@@ -30,6 +30,7 @@ type TemplateField struct {
 	Name     string
 	JsonName string
 	GoType   string
+	IsEdge   bool
 }
 
 type GeneratorOption struct {
@@ -106,6 +107,7 @@ func getTypeDefinition(schema *SchemaBuilder) ([]TemplateType, map[string]bool) 
 				Name:     toCamelCase(fieldName),
 				JsonName: predicate.Name,
 				GoType:   predicateType,
+				IsEdge:   !isKnownScalarType(predicate.ScalarType),
 			})
 		}
 

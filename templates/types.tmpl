@@ -11,10 +11,16 @@ import (
 
 {{range $element := .Types}}
     var {{ $element.Name }}Fields = []string{
-        {{- range $i, $field := .Fields}}
-            "{{ $field.JsonName }}",
+        {{- range $i, $field := .Fields }}
+            {{- if not $field.IsEdge }} "{{ $field.JsonName }}", {{ end -}}
         {{- end}}
     }
+
+    {{- range $i, $field := .Fields }}
+        {{- if $field.IsEdge }}
+            var {{ $element.Name }}To{{ $field.Name }}Edge = "{{ $field.JsonName }}"
+        {{ end -}}
+    {{- end}}
 
     var {{ $element.Name }}Type = "{{ $element.Name }}"
 

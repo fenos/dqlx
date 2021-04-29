@@ -10,7 +10,7 @@ type QueryBuilder struct {
 	childrenEdges map[string][]QueryBuilder
 }
 
-func Query(name string, rootQueryFn *FilterFn) QueryBuilder {
+func Query(rootQueryFn *FilterFn) QueryBuilder {
 	var rootFilter DQLizer
 
 	if rootQueryFn != nil {
@@ -19,7 +19,7 @@ func Query(name string, rootQueryFn *FilterFn) QueryBuilder {
 
 	builder := QueryBuilder{
 		rootEdge: edge{
-			Name:       name,
+			Name:       "rootQuery",
 			RootFilter: rootFilter,
 			Filters:    []DQLizer{},
 			IsRoot:     true,
@@ -29,20 +29,34 @@ func Query(name string, rootQueryFn *FilterFn) QueryBuilder {
 	}
 
 	builder.rootEdge.Selection = selectionSet{
-		Parent: &builder.rootEdge,
-		Edges:  builder.childrenEdges,
+		ParentName: builder.rootEdge.Name,
+		Edges:      builder.childrenEdges,
 	}
 	return builder
 }
 
+func QueryType(typeName string) QueryBuilder {
+	return Query(TypeFn(typeName))
+}
+
+func QueryEdge(edgeName string, rootQueryFn *FilterFn) QueryBuilder {
+	return Query(rootQueryFn).Name(edgeName)
+}
+
 func Variable(rootQueryFn *FilterFn) QueryBuilder {
-	query := Query("", rootQueryFn)
+	query := Query(rootQueryFn)
 	query.rootEdge.IsVariable = true
 	return query
 }
 
 func (builder QueryBuilder) As(name string) QueryBuilder {
+	builder.rootEdge.Alias = name
+	return builder
+}
+
+func (builder QueryBuilder) Name(name string) QueryBuilder {
 	builder.rootEdge.Name = name
+	builder.rootEdge.Selection.ParentName = name
 	return builder
 }
 
@@ -55,23 +69,21 @@ func (builder QueryBuilder) Variable(queryBuilder QueryBuilder) QueryBuilder {
 	return builder
 }
 
-func (builder QueryBuilder) Fields(fields ...string) QueryBuilder {
-	if len(fields) == 0 {
+func (builder QueryBuilder) Fields(fieldNames ...string) QueryBuilder {
+	if len(fieldNames) == 0 {
 		return builder
 	}
 
-	if len(fields) == 1 {
-		// templating ParseFields
-		fields = strings.Fields(fields[0])
+	allFields := Fields(fieldNames...).(fields)
+
+	selection := selectionSet{
+		ParentName:      builder.rootEdge.Name,
+		HasParentFields: len(allFields.predicates) > 0,
+		Edges:           builder.childrenEdges,
+		Fields:          allFields.predicates,
 	}
 
-	selectionSet := selectionSet{
-		Parent: &builder.rootEdge,
-		Edges:  builder.childrenEdges,
-		Fields: fields,
-	}
-
-	builder.rootEdge.Selection = selectionSet
+	builder.rootEdge.Selection = selection
 
 	return builder
 }
@@ -130,8 +142,8 @@ func (builder QueryBuilder) Edge(fullPath string, queryParts ...DQLizer) QueryBu
 			switch cast := part.(type) {
 			case filterExpr:
 				builder = builder.Filter(part)
-			case Fields:
-				builder = builder.Fields(string(cast))
+			case fields:
+				builder = builder.Fields(cast.predicates...)
 			case Pagination:
 				builder = builder.Paginate(cast)
 			case orderBy:
@@ -149,13 +161,11 @@ func (builder QueryBuilder) Edge(fullPath string, queryParts ...DQLizer) QueryBu
 }
 
 func (builder QueryBuilder) EdgeFn(fullPath string, fn func(builder QueryBuilder) QueryBuilder) QueryBuilder {
-	builder.addEdgeFn(Query(fullPath, nil), fn)
-	return builder
+	return builder.addEdgeFn(QueryEdge(fullPath, nil), fn)
 }
 
 func (builder QueryBuilder) EdgeFromQuery(edge QueryBuilder) QueryBuilder {
-	builder.addEdgeFn(edge, nil)
-	return builder
+	return builder.addEdgeFn(edge, nil)
 }
 
 func (builder QueryBuilder) addEdgeFn(query QueryBuilder, fn func(builder QueryBuilder) QueryBuilder) QueryBuilder {
@@ -167,8 +177,8 @@ func (builder QueryBuilder) addEdgeFn(query QueryBuilder, fn func(builder QueryB
 
 	edgeBuilder := query
 	edgeBuilder.rootEdge.IsRoot = false
-
 	edgeBuilder.rootEdge.Selection.Edges = builder.childrenEdges
+	edgeBuilder.rootEdge.Selection.HasParentFields = len(builder.rootEdge.Selection.Fields) > 0
 	edgeBuilder.childrenEdges = builder.childrenEdges
 
 	var parentPath string

@@ -2,11 +2,13 @@ package deku
 
 import (
 	"bytes"
+	"fmt"
 	"strings"
 )
 
 type edge struct {
 	Name       string
+	Alias      string
 	Selection  selectionSet
 	RootFilter DQLizer
 	Filters    []DQLizer
@@ -35,14 +37,16 @@ func (edge edge) ToDQL() (query string, args []interface{}, err error) {
 	writer := bytes.Buffer{}
 	edgeName := edge.RelativeName()
 
-	writer.WriteString(edgeName)
+	if edge.Alias != "" {
+		writer.WriteString(fmt.Sprintf("%s as", edge.Alias))
+	} else {
+		if !(edge.IsRoot && edge.IsVariable) {
+			writer.WriteString(edgeName)
+		}
+	}
 
 	if edge.IsVariable {
-		if edgeName != "" {
-			writer.WriteString(" as var")
-		} else {
-			writer.WriteString("var")
-		}
+		writer.WriteString("var")
 	}
 
 	if edge.IsRoot {

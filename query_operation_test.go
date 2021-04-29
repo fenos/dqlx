@@ -8,7 +8,7 @@ import (
 
 func Test_Multiple_Blocks(t *testing.T) {
 	query1 := dql.
-		Query("bladerunner", dql.EqFn("item", "value")).
+		QueryEdge("bladerunner", dql.EqFn("item", "value")).
 		Fields(`
 			uid
 			name
@@ -18,7 +18,7 @@ func Test_Multiple_Blocks(t *testing.T) {
 		Filter(dql.Eq{"field1": "value1"})
 
 	query2 := dql.
-		Query("bladerunner2", dql.EqFn("item", "value")).
+		QueryEdge("bladerunner2", dql.EqFn("item", "value")).
 		Fields(`
 			uid
 			name
