@@ -20,6 +20,7 @@ type queryOperation struct {
 
 func QueriesToDQL(queries ...QueryBuilder) (query string, args map[string]string, err error) {
 	mainOperation := queryOperation{}
+	queries = ensureUniqueQueryNames(queries)
 
 	for _, query := range queries {
 		mainOperation.operations = append(mainOperation.operations, query.rootEdge)
@@ -88,6 +89,22 @@ func toVariables(rawVariables map[int]interface{}) (variables map[string]string,
 	}
 
 	return variables, placeholders
+}
+
+func ensureUniqueQueryNames(queries []QueryBuilder) []QueryBuilder {
+	queryNames := map[string]bool{}
+	uniqueQueries := make([]QueryBuilder, len(queries))
+
+	for index, query := range queries {
+		if queryNames[query.rootEdge.Name] {
+			query = query.Name(fmt.Sprintf("%s_%d", query.rootEdge.Name, index))
+		}
+
+		queryNames[query.rootEdge.Name] = true
+		uniqueQueries[index] = query
+	}
+
+	return uniqueQueries
 }
 
 func goTypeToDQLType(value interface{}) string {

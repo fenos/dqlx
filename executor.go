@@ -78,24 +78,34 @@ func (executor DGoExecutor) ExecuteQueries(ctx context.Context, queries ...Query
 		}
 	}
 
-	operationName := "data" // default operation name
+	var dataPathKey string
 
 	if len(queries) == 1 {
-		operationName = queries[0].rootEdge.Name
+		dataPathKey = queries[0].rootEdge.Name
+	} else {
+		dataPathKey = ""
 	}
 
 	queryResponse := &QueryResponse{
-		operationName: operationName,
-		Raw:           resp,
+		dataKeyPath: dataPathKey,
+		Raw:         resp,
 	}
 
-	for _, query := range queries {
-		if query.unmarshalInto != nil {
-			err := queryResponse.Unmarshal(query.unmarshalInto)
+	queries = ensureUniqueQueryNames(queries)
 
-			if err != nil {
-				return nil, err
-			}
+	for _, queryBuilder := range queries {
+		if queryBuilder.unmarshalInto == nil {
+			continue
+		}
+		singleResponse := &QueryResponse{
+			dataKeyPath: queryBuilder.rootEdge.Name,
+			Raw:         resp,
+		}
+
+		err := singleResponse.Unmarshal(queryBuilder.unmarshalInto)
+
+		if err != nil {
+			return nil, err
 		}
 	}
 
@@ -103,8 +113,8 @@ func (executor DGoExecutor) ExecuteQueries(ctx context.Context, queries ...Query
 }
 
 type QueryResponse struct {
-	Raw           *api.Response
-	operationName string
+	Raw         *api.Response
+	dataKeyPath string
 }
 
 func (response QueryResponse) Unmarshal(value interface{}) error {
@@ -130,5 +140,9 @@ func (response QueryResponse) Unmarshal(value interface{}) error {
 		return err
 	}
 
-	return decoder.Decode(values[response.operationName])
+	if response.dataKeyPath != "" {
+		return decoder.Decode(values[response.dataKeyPath])
+	}
+
+	return decoder.Decode(values)
 }
