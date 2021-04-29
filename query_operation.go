@@ -18,7 +18,7 @@ type queryOperation struct {
 	variables  []Operation
 }
 
-func OperationQuery(queries ...QueryBuilder) (query string, args map[string]string, err error) {
+func QueriesToDQL(queries ...QueryBuilder) (query string, args map[string]string, err error) {
 	mainOperation := queryOperation{}
 
 	for _, query := range queries {
@@ -56,7 +56,7 @@ func (grammar queryOperation) ToDQL() (query string, variables map[string]string
 	innerQuery := strings.Join(statements, " ")
 
 	query, rawVariables := replacePlaceholders(innerQuery, args)
-	variables, placeholders := toQueryVariables(rawVariables)
+	variables, placeholders := toVariables(rawVariables)
 
 	writer := bytes.Buffer{}
 	writer.WriteString(fmt.Sprintf("query %s(%s) {", queryName, strings.Join(placeholders, ", ")))
@@ -66,7 +66,7 @@ func (grammar queryOperation) ToDQL() (query string, variables map[string]string
 	return writer.String(), variables, nil
 }
 
-func toQueryVariables(rawVariables map[int]interface{}) (variables map[string]string, placeholders []string) {
+func toVariables(rawVariables map[int]interface{}) (variables map[string]string, placeholders []string) {
 	variables = map[string]string{}
 	placeholders = make([]string, len(rawVariables))
 

@@ -1,6 +1,8 @@
 package deku
 
 import (
+	"context"
+	"github.com/dgraph-io/dgo/v200"
 	"strings"
 )
 
@@ -8,6 +10,9 @@ type QueryBuilder struct {
 	rootEdge      edge
 	variables     []QueryBuilder
 	childrenEdges map[string][]QueryBuilder
+	unmarshalInto interface{}
+
+	client *dgo.Dgraph
 }
 
 func Query(rootQueryFn *FilterFn) QueryBuilder {
@@ -61,7 +66,7 @@ func (builder QueryBuilder) Name(name string) QueryBuilder {
 }
 
 func (builder QueryBuilder) ToDQL() (query string, args map[string]string, err error) {
-	return OperationQuery(builder)
+	return QueriesToDQL(builder)
 }
 
 func (builder QueryBuilder) Variable(queryBuilder QueryBuilder) QueryBuilder {
@@ -166,6 +171,26 @@ func (builder QueryBuilder) EdgeFn(fullPath string, fn func(builder QueryBuilder
 
 func (builder QueryBuilder) EdgeFromQuery(edge QueryBuilder) QueryBuilder {
 	return builder.addEdgeFn(edge, nil)
+}
+
+func (builder QueryBuilder) UnmarshalInto(value interface{}) QueryBuilder {
+	builder.unmarshalInto = value
+	return builder
+}
+
+func (builder QueryBuilder) WithDClient(client *dgo.Dgraph) QueryBuilder {
+	builder.client = client
+	return builder
+}
+
+func (builder QueryBuilder) Execute(ctx context.Context, options ...ExecutorOptionFn) (*QueryResponse, error) {
+	executor := NewDGoExecutor(builder.client)
+
+	for _, option := range options {
+		option(executor)
+	}
+
+	return executor.ExecuteQueries(ctx, builder)
 }
 
 func (builder QueryBuilder) addEdgeFn(query QueryBuilder, fn func(builder QueryBuilder) QueryBuilder) QueryBuilder {
