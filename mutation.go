@@ -7,6 +7,11 @@ import (
 	"strings"
 )
 
+// MutationBuilder used to construct mutations
+// in a fluent way.
+//
+// Example: Mutation().Set(data).Execute(ctx)
+// Example: Mutation().Delete(data).Execute(ctx)
 type MutationBuilder struct {
 	condition DQLizer
 	query     QueryBuilder
@@ -18,10 +23,14 @@ type MutationBuilder struct {
 	client *dgo.Dgraph
 }
 
+// Mutation creates a new MutationBuilder
 func Mutation() MutationBuilder {
 	return MutationBuilder{}
 }
 
+// Condition assigns a condition for this mutation
+// Used for conditional Upserts
+// DGraphDoc: https://dgraph.io/docs/mutations/conditional-upsert/
 func (builder MutationBuilder) Condition(condition DQLizer) MutationBuilder {
 	if conditionType, ok := condition.(mutationCondition); ok {
 		builder.condition = conditionType
@@ -32,26 +41,33 @@ func (builder MutationBuilder) Condition(condition DQLizer) MutationBuilder {
 	return builder
 }
 
+// Query assigns a query block for this mutation
+// making it an Upsert
 func (builder MutationBuilder) Query(condition DQLizer) MutationBuilder {
 	builder.condition = condition
 	return builder
 }
 
+// UnmarshalInto defines where the data should be marshalled into,
+// once the mutation gets executed
 func (builder MutationBuilder) UnmarshalInto(value interface{}) MutationBuilder {
 	builder.unmarshalInto = value
 	return builder
 }
 
+// Set sets some data to be inserted or updated
 func (builder MutationBuilder) Set(data interface{}) MutationBuilder {
 	builder.setData = data
 	return builder
 }
 
+// Delete sets some data to be deleted
 func (builder MutationBuilder) Delete(data interface{}) MutationBuilder {
 	builder.delData = data
 	return builder
 }
 
+// Execute executes the mutation
 func (builder MutationBuilder) Execute(ctx context.Context, options ...ExecutorOptionFn) (*Response, error) {
 	executor := NewDGoExecutor(builder.client)
 
@@ -61,11 +77,14 @@ func (builder MutationBuilder) Execute(ctx context.Context, options ...ExecutorO
 
 	defer func() {
 		builder.unmarshalInto = nil
+		builder.setData = nil
+		builder.delData = nil
 	}()
 
 	return executor.ExecuteMutations(ctx, builder)
 }
 
+// WithDClient changes Dgraph client for this mutation
 func (builder MutationBuilder) WithDClient(client *dgo.Dgraph) MutationBuilder {
 	builder.client = client
 	return builder
@@ -75,10 +94,12 @@ type mutationCondition struct {
 	Filters []DQLizer
 }
 
+// Condition returns a condition statement
 func Condition(filters ...DQLizer) DQLizer {
 	return mutationCondition{Filters: filters}
 }
 
+// ToDQL returns a DQL statement for a mutation condition
 func (condition mutationCondition) ToDQL() (query string, args []interface{}, err error) {
 	writer := bytes.Buffer{}
 	writer.WriteString(" @if(")
