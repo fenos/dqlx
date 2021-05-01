@@ -11,12 +11,12 @@ import (
 
 {{range $element := .Types}}
     var {{ $element.Name }}Fields = []string{
-        {{- range $i, $field := .Fields }}
+        {{- range $i, $field := .Predicates }}
             {{- if not $field.IsEdge }} "{{ $field.JsonName }}", {{ end -}}
         {{- end}}
     }
 
-    {{- range $i, $field := .Fields }}
+    {{- range $i, $field := .Predicates }}
         {{- if $field.IsEdge }}
             var {{ $element.Name }}To{{ $field.Name }}Edge = "{{ $field.JsonName }}"
         {{ end -}}
@@ -25,7 +25,7 @@ import (
     var {{ $element.Name }}Type = "{{ $element.Name }}"
 
     type {{ $element.Name }} struct {
-    {{- range $i, $field := .Fields}}
+    {{- range $i, $field := .Predicates}}
         {{ $field.Name }} {{ $field.GoType }} {{if $field.JsonName}} `json:"{{ $field.JsonName }},omitempty"`{{- end}}
     {{- end}}
 }

@@ -37,6 +37,7 @@ var (
 	uidInFunc      FuncType = "uid_in"     // Done
 )
 
+// FilterFn represents a filter function
 type FilterFn struct {
 	DQLizer
 }
@@ -99,7 +100,12 @@ func (filter filterKV) toDQL(funcType FuncType) (query string, args []interface{
 	return strings.Join(expressions, " AND "), args, nil
 }
 
+// Or represents a OR conjunction statement
+// Example: dqlx.Or{ dql.Eq{} }
 type Or conjunction
+
+// And represents a AND conjunction statement
+// Example: dqlx.And{ dql.Eq{} }
 type And conjunction
 
 type conjunction []DQLizer
@@ -126,10 +132,12 @@ func (connector conjunction) join(separator string) (query string, args []interf
 	return
 }
 
+// ToDQL returns the DQL statement for the 'or' expression
 func (or Or) ToDQL() (query string, args []interface{}, err error) {
 	return conjunction(or).join(" OR ")
 }
 
+// ToDQL returns the DQL statement for the 'and' expression
 func (and And) ToDQL() (query string, args []interface{}, err error) {
 	return conjunction(and).join(" AND ")
 }

@@ -17,27 +17,33 @@ var typesTmpl string
 
 type templateTypesVariables struct {
 	PackageName string
-	Types       []TemplateType
+	Types       []TemplateDGraphType
 	Imports     map[string]bool
 }
 
-type TemplateType struct {
-	Name   string
-	Fields []TemplateField
+// TemplateDGraphType represents a DGraphType definition
+// for templating purpose
+type TemplateDGraphType struct {
+	Name       string
+	Predicates []TemplateDGraphPredicate
 }
 
-type TemplateField struct {
+// TemplateDGraphPredicate represents a DGraphPredicate definition
+// for templating purpose
+type TemplateDGraphPredicate struct {
 	Name     string
 	JsonName string
 	GoType   string
 	IsEdge   bool
 }
 
+// GeneratorOption options for the generator
 type GeneratorOption struct {
 	Path        string
 	PackageName string
 }
 
+// GenerateTypes given a schema it generates Go structs definitions
 func GenerateTypes(schema *SchemaBuilder, options GeneratorOption) error {
 	tmpl, err := template.New("types").Parse(typesTmpl)
 
@@ -68,18 +74,18 @@ func GenerateTypes(schema *SchemaBuilder, options GeneratorOption) error {
 	return ioutil.WriteFile(options.Path, formattedCode, fs.ModePerm)
 }
 
-func getTypeDefinition(schema *SchemaBuilder) ([]TemplateType, map[string]bool) {
-	types := make([]TemplateType, len(schema.Types))
+func getTypeDefinition(schema *SchemaBuilder) ([]TemplateDGraphType, map[string]bool) {
+	types := make([]TemplateDGraphType, len(schema.Types))
 	imports := map[string]bool{}
 
 	for index, dType := range schema.Types {
-		templateType := TemplateType{
-			Name:   dType.name,
-			Fields: nil,
+		templateType := TemplateDGraphType{
+			Name:       dType.name,
+			Predicates: nil,
 		}
 
 		// Add fields
-		templateType.Fields = append(templateType.Fields, TemplateField{
+		templateType.Predicates = append(templateType.Predicates, TemplateDGraphPredicate{
 			Name:     "Uid",
 			JsonName: "uid",
 			GoType:   "string",
@@ -90,7 +96,7 @@ func getTypeDefinition(schema *SchemaBuilder) ([]TemplateType, map[string]bool) 
 				imports["time"] = true
 			}
 
-			predicateType := dgraphScalarToGoType(predicate.ScalarType)
+			predicateType := dqlTypeToGoType(predicate.ScalarType)
 
 			if predicate.List {
 				predicateType = fmt.Sprintf("[]%s", predicateType)
@@ -103,7 +109,7 @@ func getTypeDefinition(schema *SchemaBuilder) ([]TemplateType, map[string]bool) 
 				fieldName = parts[len(parts)-1]
 			}
 
-			templateType.Fields = append(templateType.Fields, TemplateField{
+			templateType.Predicates = append(templateType.Predicates, TemplateDGraphPredicate{
 				Name:     toCamelCase(fieldName),
 				JsonName: predicate.Name,
 				GoType:   predicateType,
@@ -112,7 +118,7 @@ func getTypeDefinition(schema *SchemaBuilder) ([]TemplateType, map[string]bool) 
 		}
 
 		// Default DType field
-		templateType.Fields = append(templateType.Fields, TemplateField{
+		templateType.Predicates = append(templateType.Predicates, TemplateDGraphPredicate{
 			Name:     "DType",
 			JsonName: "dgraph.type",
 			GoType:   "[]string",
@@ -122,23 +128,6 @@ func getTypeDefinition(schema *SchemaBuilder) ([]TemplateType, map[string]bool) 
 	}
 
 	return types, imports
-}
-
-func dgraphScalarToGoType(value DGraphScalar) string {
-	switch value {
-	case ScalarPassword, ScalarString, ScalarUID:
-		return "string"
-	case ScalarInt:
-		return "int64"
-	case ScalarDateTime:
-		return "time.Time"
-	case ScalarBool:
-		return "bool"
-	case ScalarFloat:
-		return "float64"
-	}
-
-	return string(value)
 }
 
 var link = regexp.MustCompile("(^[A-Za-z])|_([A-Za-z])")

@@ -390,7 +390,7 @@ func Test_Query_Value_Variable(t *testing.T) {
 				}
 			}
 
-			bladerunner(func: eq(item,$1)) @filter(uid(val(D)),uid(D)) {
+			bladerunner(func: eq(item,$1)) @filter(uid(val(D)) AND uid(D)) {
 				uid
 				name
 				initial_release_date
@@ -629,7 +629,7 @@ func Test_List_function_Query(t *testing.T) {
 
 	expected := dql.Minify(`
 		query Bladerunner($0:string, $1:string, $2:datetime, $3:datetime) {
-			bladerunner(func: uid($0)) @filter(uid_in(name,$1),between(release_date,$2,$3)) {
+			bladerunner(func: uid($0)) @filter(uid_in(name,$1) AND between(release_date,$2,$3)) {
 				uid
 				name
 				initial_release_date

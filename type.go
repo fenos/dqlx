@@ -36,10 +36,10 @@ func WithTypePrefix(usePrefix bool) TypeBuilderOptionModifier {
 	}
 }
 
-func (builder *TypeBuilder) String(predicate string) PredicateStringBuilder {
+func (builder *TypeBuilder) String(predicate string) *PredicateStringBuilder {
 	predicate = builder.normalizeName(predicate)
 
-	field := PredicateStringBuilder{
+	field := &PredicateStringBuilder{
 		PredicateBuilder: &PredicateBuilder{
 			predicate: &DGraphPredicate{
 				Name:       predicate,

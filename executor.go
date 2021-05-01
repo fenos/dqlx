@@ -11,6 +11,8 @@ import (
 	"time"
 )
 
+// DGoExecutor represents a Dgraph executor using
+// the official dgo client
 type DGoExecutor struct {
 	client *dgo.Dgraph
 	tnx    *dgo.Txn
@@ -19,38 +21,50 @@ type DGoExecutor struct {
 	bestEffort bool
 }
 
+// ExecutorOptionFn used to modify options of the executor
 type ExecutorOptionFn func(executor *DGoExecutor)
 
+// WithTnx configures a transaction to be used
+// for the current execution
 func WithTnx(tnx *dgo.Txn) ExecutorOptionFn {
 	return func(executor *DGoExecutor) {
 		executor.tnx = tnx
 	}
 }
 
+// WithClient configures a client for the current execution
 func WithClient(client *dgo.Dgraph) ExecutorOptionFn {
 	return func(executor *DGoExecutor) {
 		executor.client = client
 	}
 }
 
+// WithReadOnly marks the execution as a read-only operation
+// you can use this only on queries
 func WithReadOnly(readOnly bool) ExecutorOptionFn {
 	return func(executor *DGoExecutor) {
 		executor.readOnly = readOnly
 	}
 }
 
+// WithBestEffort sets the best effort flag for the current execution
 func WithBestEffort(bestEffort bool) ExecutorOptionFn {
 	return func(executor *DGoExecutor) {
 		executor.bestEffort = bestEffort
 	}
 }
 
+// NewDGoExecutor creates a new DGoExecutor
 func NewDGoExecutor(client *dgo.Dgraph) *DGoExecutor {
 	return &DGoExecutor{
 		client: client,
 	}
 }
 
+// ExecuteQueries executes a query operation. If multiple queries are provided they will
+// get merged into a single one.
+// the transaction will be automatically committed if a custom tnx is not provided.
+// only non-readonly transactions will be committed.
 func (executor DGoExecutor) ExecuteQueries(ctx context.Context, queries ...QueryBuilder) (*Response, error) {
 	if err := executor.ensureClient(); err != nil {
 		return nil, err
@@ -71,15 +85,19 @@ func (executor DGoExecutor) ExecuteQueries(ctx context.Context, queries ...Query
 	}
 
 	if !executor.readOnly {
-		err := tx.Commit(ctx)
-		if err != nil {
-			return nil, err
+		if executor.tnx != nil {
+			err := tx.Commit(ctx)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
 	return executor.toResponse(resp, queries...)
 }
 
+// ExecuteMutations executes one ore more mutations.
+// the transaction will be automatically committed if a custom tnx is not provided.
 func (executor DGoExecutor) ExecuteMutations(ctx context.Context, mutations ...MutationBuilder) (*Response, error) {
 	if err := executor.ensureClient(); err != nil {
 		return nil, err
@@ -223,11 +241,14 @@ func (executor DGoExecutor) getTnx() *dgo.Txn {
 	return tx
 }
 
+// Response represents an operation response
 type Response struct {
 	Raw         *api.Response
 	dataKeyPath string
 }
 
+// Unmarshal allows to dynamically marshal the result set of a query
+// into an interface value
 func (response Response) Unmarshal(value interface{}) error {
 	values := map[string]interface{}{}
 	err := json.Unmarshal(response.Raw.Json, &values)

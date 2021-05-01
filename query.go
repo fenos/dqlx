@@ -189,11 +189,6 @@ func (builder QueryBuilder) Execute(ctx context.Context, options ...ExecutorOpti
 	for _, option := range options {
 		option(executor)
 	}
-
-	defer func() {
-		builder.unmarshalInto = nil
-	}()
-
 	return executor.ExecuteQueries(ctx, builder)
 }
 

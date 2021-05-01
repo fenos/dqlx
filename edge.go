@@ -159,7 +159,7 @@ func (edge edge) addFilters(writer *bytes.Buffer, args *[]interface{}) error {
 		return err
 	}
 
-	writer.WriteString(strings.Join(statements, ","))
+	writer.WriteString(strings.Join(statements, " AND "))
 
 	writer.WriteString(")")
 	return nil
@@ -187,10 +187,16 @@ func (edge edge) addGroupBy(writer *bytes.Buffer, args *[]interface{}) error {
 	return nil
 }
 
+// EdgePath returns the abstract representation of an edge
+// Example: dqlx.EdgePath("field1", "field2")
+// Returns: "field1->field2"
 func EdgePath(abstractPath ...string) string {
 	return strings.Join(abstractPath, symbolEdgeTraversal)
 }
 
+// ParseEdge parses the abstract representation of an edge
+// Example: dqlx.ParseEdge("field1->field2")
+// Returns: []string{"field1", "field2"}
 func ParseEdge(abstractPath string) []string {
 	return strings.Split(abstractPath, symbolEdgeTraversal)
 }

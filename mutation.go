@@ -74,13 +74,6 @@ func (builder MutationBuilder) Execute(ctx context.Context, options ...ExecutorO
 	for _, option := range options {
 		option(executor)
 	}
-
-	defer func() {
-		builder.unmarshalInto = nil
-		builder.setData = nil
-		builder.delData = nil
-	}()
-
 	return executor.ExecuteMutations(ctx, builder)
 }
 

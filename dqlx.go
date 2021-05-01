@@ -32,10 +32,12 @@ type DB interface {
 	Mutation() MutationBuilder
 
 	ExecuteQueries(ctx context.Context, queries []QueryBuilder, options ...ExecutorOptionFn) (*Response, error)
+	ExecuteMutations(ctx context.Context, mutations []MutationBuilder, options ...ExecutorOptionFn) (*Response, error)
 
 	Variable(rootQueryFn *FilterFn) QueryBuilder
 	NewTxn() *dgo.Txn
 	NewReadOnlyTxn() *dgo.Txn
+	GetDgraph() *dgo.Dgraph
 }
 
 type dqlx struct {
@@ -120,4 +122,9 @@ func (dqlx *dqlx) NewTxn() *dgo.Txn {
 // NewReadOnlyTxn creates a new read-only transaction
 func (dqlx *dqlx) NewReadOnlyTxn() *dgo.Txn {
 	return dqlx.NewReadOnlyTxn()
+}
+
+// GetDgraph returns the dgraph client
+func (dqlx *dqlx) GetDgraph() *dgo.Dgraph {
+	return dqlx.dgraph
 }
