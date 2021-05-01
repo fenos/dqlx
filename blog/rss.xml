@@ -2,7 +2,7 @@
 <rss version="2.0">
     <channel>
         <title>dqlx Blog</title>
-        <link>https://fenos.github.io/dqlx/blog</link>
+        <link>https://fenos.github.io/blog</link>
         <description>dqlx Blog</description>
         <lastBuildDate>Sun, 25 Oct 2015 23:29:00 GMT</lastBuildDate>
         <docs>https://validator.w3.org/feed/docs/rss2.html</docs>

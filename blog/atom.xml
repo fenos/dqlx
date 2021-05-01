@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
-    <id>https://fenos.github.io/dqlx/blog</id>
+    <id>https://fenos.github.io/blog</id>
     <title>dqlx Blog</title>
     <updated>2015-10-25T23:29:00.000Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
-    <link rel="alternate" href="https://fenos.github.io/dqlx/blog"/>
+    <link rel="alternate" href="https://fenos.github.io/blog"/>
     <subtitle>dqlx Blog</subtitle>
-    <icon>https://fenos.github.io/dqlx/img/favicon.ico</icon>
+    <icon>https://fenos.github.io/img/favicon.ico</icon>
 </feed>
