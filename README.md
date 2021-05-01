@@ -1,12 +1,12 @@
 # dqlx
 
-dqlx is a [DGraph](https://github.com/dgraph-io/dgraph) query builder </br>
-Compose fluently complex and dynamic DGraph queries & mutations!
+dqlx is a fully featured [DGraph](https://github.com/dgraph-io/dgraph) Schema and Query Builder for Go.
+It aims to simplify the interaction with the awesome Dgraph database allowing you to fluently compose any queries and mutations of any complexity. It also comes with a rich Schema builder to easily develop and maintain your Dgraph schema.
 
 ---
 
 ### Status
-The project is currently **🦸 Working Progress 🦸**, the API hasn't fully stabilised just yet.
+The project is getting close to its first official release v1.0
 
 ### Why?
 The DGraph query language is awesome! it is really powerful, and you can achieve a lot with it.
@@ -31,7 +31,9 @@ dqlx tries to simplify the interaction with DGraph by helping to construct Queri
 - [x] Facets
 - [x] Mutations
 
-## Getting Started
+## Documentation
+
+You can find the documentation here: https://fenos.github.io/dqlx
 
 ---
 
@@ -42,95 +44,40 @@ go get github.com/fenos/dqlx
 
 ### Quick Overview
 
-Here is how you produce a **super simple** query:
 ```go
-query, variables, err := dql.
-    QueryEdge("bladerunner", dql.EqFn("item", "value")).
-    Fields(`
-        uid
-        name
-        initial_release_date
-        netflix_id
-    `).
-    Filter(dql.Eq{"field1": "value1"}).
-    ToDQL()
+func main() {
+    // Connect to Dgraph cluster
+    db, err := dqlx.Connect("localhost:9080")
 
-
-print(query)
-```
-
-Produces
-```graphql
-query Bladerunner($0:string, $1:string) {
-    bladerunner(func: eq(item,$0)) @filter(eq(field1,$1)) {
-        uid
-        name
-        initial_release_date
-        netflix_id
+    if err != nil {
+        log.Fatal()
     }
-}
-```
 
-The true power of **dqlx** shows when you start getting serious
+    ctx := context.Background()
 
-```go
-query, variables, err := dql.
-    QueryEdge("bladerunner", dql.EqFn("name@en", "Blade Runner")).
-    Fields(`
-        uid
-        name
-        initial_release_date
-        netflix_id
-    `).
-    Edge("authors", dql.Fields(`
-        uid
-        name
-        surname
-        age
-    `), dql.Eq{"age": 20}).
-    Edge("actors", dql.Fields(`
-        uid
-        surname
-        age
-    `), dql.Gt{"age": []int{18, 20, 30}}).
-    Edge("actors->rewards"), dql.Fields(`
-        uid
-        points
-    `), dql.Gt{"points": 3}).
-    ToDQL()
-```
+    var animals []map[string]interface{}
 
-Produces
-
-```graphql
-query Bladerunner($0:string, $1:int, $2:int, $3:int, $4:int, $5:int) {
-    bladerunner(func: eq(name@en,$0)) {
-        uid
-        name
-        initial_release_date
-        netflix_id
-        authors @filter(eq(age,$1)) {
+    // Query for animals
+    _, err = db.
+        QueryType("Animal").
+        Filter(
+            dqlx.Eq{"species": "Cat"},
+            dqlx.Lt{"age": 5},
+        ).
+        Fields(`
             uid
             name
-            surname
+            species
             age
-        }
-        actors @filter(gt(age,[$2,$3,$4])) {
-            uid
-            surname
-            age
-            rewards @filter(gt(points,$5)) {
-                uid
-                points
-            }
-        }
-    }
+        `).
+        UnmarshalInto(&animals).
+        Execute(ctx)
+
+    if err != nil { panic(err) }
+
+    println(fmt.Sprintf("The animals are: %v", animals))
 }
 ```
-
-Not yet convinced?
-
-Check the [Test Cases](https://github.com/fenos/dqlx/blob/main/query_test.go) until the full documentation is ready
 
 ### Licence
 MIT
