@@ -2,15 +2,22 @@ package dqlx
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"strings"
+
+	"github.com/dgraph-io/dgo/v200"
 )
 
+// SchemaBuilder used to compose a Dgraph schema in a fluent manner
 type SchemaBuilder struct {
 	Predicates []*DGraphPredicate
 	Types      []*DGraphType
+
+	client *dgo.Dgraph
 }
 
+// NewSchema creates a new SchemaBuilder
 func NewSchema() *SchemaBuilder {
 	return &SchemaBuilder{
 		Predicates: nil,
@@ -18,6 +25,13 @@ func NewSchema() *SchemaBuilder {
 	}
 }
 
+// WithClient sets the dgraph client
+func (schema *SchemaBuilder) WithClient(client *dgo.Dgraph) *SchemaBuilder {
+	schema.client = client
+	return schema
+}
+
+// ToDQL returns the schema in a DQL format
 func (schema *SchemaBuilder) ToDQL() (string, error) {
 	writer := bytes.Buffer{}
 
@@ -43,6 +57,7 @@ func (schema *SchemaBuilder) ToDQL() (string, error) {
 	return writer.String(), nil
 }
 
+// PredicatesToString returns predicates to a DQL string
 func (schema *SchemaBuilder) PredicatesToString() (string, error) {
 	writer := bytes.Buffer{}
 
@@ -67,6 +82,7 @@ func (schema *SchemaBuilder) PredicatesToString() (string, error) {
 	return writer.String(), nil
 }
 
+// TypesToString returns type definitions to a DQL string
 func (schema *SchemaBuilder) TypesToString() (string, error) {
 	writer := bytes.Buffer{}
 
@@ -86,6 +102,7 @@ func (schema *SchemaBuilder) TypesToString() (string, error) {
 	return writer.String(), nil
 }
 
+// HasType determines if a type has been already registered
 func (schema *SchemaBuilder) HasType(name string) bool {
 	for _, schemaType := range schema.Types {
 		if schemaType.name == name {
@@ -95,6 +112,7 @@ func (schema *SchemaBuilder) HasType(name string) bool {
 	return false
 }
 
+// HasPredicate determines if a predicate has been already registered
 func (schema *SchemaBuilder) HasPredicate(name string) bool {
 	for _, predicate := range schema.Predicates {
 		if predicate.Name == name {
@@ -104,8 +122,10 @@ func (schema *SchemaBuilder) HasPredicate(name string) bool {
 	return false
 }
 
+// TypeBuilderFn represents the closure function for the type builder
 type TypeBuilderFn func(builder *TypeBuilder)
 
+// Type registers a type definition to the schema
 func (schema *SchemaBuilder) Type(name string, builderFn TypeBuilderFn, options ...TypeBuilderOptionModifier) *TypeBuilder {
 	if schema.HasType(name) {
 		panic(fmt.Errorf("type '%s' already registered", name))
@@ -131,6 +151,7 @@ func (schema *SchemaBuilder) Type(name string, builderFn TypeBuilderFn, options 
 	return builder
 }
 
+// Predicate registers a predicate to the schema
 func (schema *SchemaBuilder) Predicate(name string, scalar DGraphScalar) *PredicateBuilder {
 	builder := &PredicateBuilder{
 		predicate: &DGraphPredicate{
@@ -142,4 +163,62 @@ func (schema *SchemaBuilder) Predicate(name string, scalar DGraphScalar) *Predic
 	schema.Predicates = append(schema.Predicates, builder.predicate)
 
 	return builder
+}
+
+// PredicateString registers a predicate string type
+func (schema *SchemaBuilder) PredicateString(name string) *PredicateStringBuilder {
+	builder := &PredicateStringBuilder{
+		PredicateBuilder: &PredicateBuilder{
+			predicate: &DGraphPredicate{
+				Name:       name,
+				ScalarType: ScalarString,
+			},
+		},
+	}
+
+	schema.Predicates = append(schema.Predicates, builder.predicate)
+
+	return builder
+}
+
+// PredicateDatetime registers a predicate datetime
+func (schema *SchemaBuilder) PredicateDatetime(name string) *PredicateDateBuilder {
+	builder := &PredicateDateBuilder{
+		PredicateBuilder: &PredicateBuilder{
+			predicate: &DGraphPredicate{
+				Name:       name,
+				ScalarType: ScalarDateTime,
+			},
+		},
+	}
+
+	schema.Predicates = append(schema.Predicates, builder.predicate)
+
+	return builder
+}
+
+// Alter alters the schema with the current state. No drop operation will happen
+// if DropAll is not explicitly set
+func (schema *SchemaBuilder) Alter(ctx context.Context, options ...SchemaExecutorOptionFn) error {
+	schemaExecutor := NewSchemaExecutor(schema.client)
+
+	for _, option := range options {
+		option(schemaExecutor)
+	}
+
+	return schemaExecutor.AlterSchema(ctx, schema)
+}
+
+// DropType drops a type
+func (schema *SchemaBuilder) DropType(ctx context.Context, typeName string) error {
+	schemaExecutor := NewSchemaExecutor(schema.client)
+
+	return schemaExecutor.DropType(ctx, typeName)
+}
+
+// DropPredicate drops a predicate
+func (schema *SchemaBuilder) DropPredicate(ctx context.Context, predicateName string) error {
+	schemaExecutor := NewSchemaExecutor(schema.client)
+
+	return schemaExecutor.DropPredicate(ctx, predicateName)
 }

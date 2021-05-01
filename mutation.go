@@ -68,7 +68,7 @@ func (builder MutationBuilder) Delete(data interface{}) MutationBuilder {
 }
 
 // Execute executes the mutation
-func (builder MutationBuilder) Execute(ctx context.Context, options ...ExecutorOptionFn) (*Response, error) {
+func (builder MutationBuilder) Execute(ctx context.Context, options ...OperationExecutorOptionFn) (*Response, error) {
 	executor := NewDGoExecutor(builder.client)
 
 	for _, option := range options {

@@ -238,7 +238,7 @@ func Test_Query_Pagination(t *testing.T) {
 			initial_release_date
 			netflix_id
 		`).
-		Paginate(dql.Pagination{
+		Paginate(dql.Cursor{
 			First:  20,
 			Offset: 1,
 			After:  "4567",
@@ -251,7 +251,7 @@ func Test_Query_Pagination(t *testing.T) {
 					surname
 					age
 				`).
-				Paginate(dql.Pagination{
+				Paginate(dql.Cursor{
 					First:  10,
 					Offset: 2,
 					After:  "1234",
@@ -265,7 +265,7 @@ func Test_Query_Pagination(t *testing.T) {
 					age
 				`).
 				Filter(dql.Gt{"age": 30}).
-				Paginate(dql.Pagination{
+				Paginate(dql.Cursor{
 					First:  2,
 					Offset: 3,
 					After:  "45",
@@ -417,7 +417,7 @@ func Test_Query_OrderBy(t *testing.T) {
 		Edge("films", dql.Fields(`
 			id
 			date
-		`), dql.OrderDesc("date"), dql.Pagination{First: 10}).
+		`), dql.OrderDesc("date"), dql.Cursor{First: 10}).
 		ToDQL()
 
 	expected := dql.Minify(`

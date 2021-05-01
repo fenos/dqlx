@@ -222,6 +222,29 @@ func TestTypeBuilder_Fields(t *testing.T) {
 		require.Equal(t, expectedPredicates, dql.Minify(predicates))
 	})
 
+	t.Run("global predicate on a type", func(t *testing.T) {
+		schema := dql.NewSchema()
+
+		name := schema.Predicate("name", dql.ScalarString)
+
+		schema.Type("User", func(user *dql.TypeBuilder) {
+			user.Predicate(name)
+			user.String("surname")
+		})
+
+		types, err := schema.TypesToString()
+
+		expected := dql.Minify(`
+			type User {
+				name
+				User.surname
+			}
+		`)
+
+		require.NoError(t, err)
+		require.Equal(t, expected, dql.Minify(types))
+	})
+
 	// TODO:  geo indexes
 
 	t.Run("can't register multiple QueryFields with the same name", func(t *testing.T) {

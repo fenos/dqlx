@@ -11,9 +11,9 @@ func Test_Multiple_Blocks(t *testing.T) {
 		QueryEdge("bladerunner", dql.EqFn("item", "value")).
 		Fields(`
 			uid
-			name
+			super_alias:name
 			initial_release_date
-			netflix_id
+			d AS netflix_id
 		`).
 		Filter(dql.Eq{"field1": "value1"})
 
@@ -39,9 +39,9 @@ func Test_Multiple_Blocks(t *testing.T) {
 		query Bladerunner_Bladerunner2($0:string, $1:string, $2:string, $3:string) {
 			bladerunner(func: eq(item,$0)) @filter(eq(field1,$1)) {
 				uid
-				name
+				super_alias:name
 				initial_release_date
-				netflix_id
+				d AS netflix_id
 			}
 
 			bladerunner2(func: eq(item,$2)) @filter(eq(field1,$3)) {

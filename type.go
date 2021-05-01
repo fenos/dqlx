@@ -77,6 +77,10 @@ func (builder *TypeBuilder) Type(predicate string, kind string) *PredicateBuilde
 	return builder.field(predicate, castKind)
 }
 
+func (builder *TypeBuilder) Predicate(predicate *PredicateBuilder) {
+	builder.registerPredicate(predicate.predicate)
+}
+
 func (builder *TypeBuilder) UID(predicate string) *PredicateBuilder {
 	return builder.field(predicate, ScalarUID)
 }

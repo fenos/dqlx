@@ -1,9 +1,10 @@
 package dqlx_test
 
 import (
+	"testing"
+
 	dql "github.com/fenos/dqlx"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestGenerateTypes(t *testing.T) {

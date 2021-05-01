@@ -597,20 +597,20 @@ func UIDInFn(predicate string, value interface{}) *FilterFn {
 	return &FilterFn{expression}
 }
 
-// Pagination represents pagination parameters
-type Pagination struct {
+// Cursor represents pagination parameters
+type Cursor struct {
 	First  int
 	Offset int
 	After  string
 }
 
 // WantsPagination determines if pagination is requested
-func (p Pagination) WantsPagination() bool {
+func (p Cursor) WantsPagination() bool {
 	return p.Offset != 0 || p.First != 0 || p.After != ""
 }
 
 // ToDQL returns the DQL statement for the 'pagination' expression
-func (p Pagination) ToDQL() (query string, args []interface{}, err error) {
+func (p Cursor) ToDQL() (query string, args []interface{}, err error) {
 	var paginationExpressions []string
 	if p.First != 0 {
 		paginationExpressions = append(paginationExpressions, "first:??")

@@ -11,9 +11,9 @@ import (
 	"time"
 )
 
-// DGoExecutor represents a Dgraph executor using
-// the official dgo client
-type DGoExecutor struct {
+// OperationExecutor represents a Dgraph executor for operations
+// such as Queries and Mutations using the official dgo client
+type OperationExecutor struct {
 	client *dgo.Dgraph
 	tnx    *dgo.Txn
 
@@ -21,42 +21,42 @@ type DGoExecutor struct {
 	bestEffort bool
 }
 
-// ExecutorOptionFn used to modify options of the executor
-type ExecutorOptionFn func(executor *DGoExecutor)
+// OperationExecutorOptionFn used to modify options of the executor
+type OperationExecutorOptionFn func(executor *OperationExecutor)
 
 // WithTnx configures a transaction to be used
 // for the current execution
-func WithTnx(tnx *dgo.Txn) ExecutorOptionFn {
-	return func(executor *DGoExecutor) {
+func WithTnx(tnx *dgo.Txn) OperationExecutorOptionFn {
+	return func(executor *OperationExecutor) {
 		executor.tnx = tnx
 	}
 }
 
 // WithClient configures a client for the current execution
-func WithClient(client *dgo.Dgraph) ExecutorOptionFn {
-	return func(executor *DGoExecutor) {
+func WithClient(client *dgo.Dgraph) OperationExecutorOptionFn {
+	return func(executor *OperationExecutor) {
 		executor.client = client
 	}
 }
 
 // WithReadOnly marks the execution as a read-only operation
 // you can use this only on queries
-func WithReadOnly(readOnly bool) ExecutorOptionFn {
-	return func(executor *DGoExecutor) {
+func WithReadOnly(readOnly bool) OperationExecutorOptionFn {
+	return func(executor *OperationExecutor) {
 		executor.readOnly = readOnly
 	}
 }
 
 // WithBestEffort sets the best effort flag for the current execution
-func WithBestEffort(bestEffort bool) ExecutorOptionFn {
-	return func(executor *DGoExecutor) {
+func WithBestEffort(bestEffort bool) OperationExecutorOptionFn {
+	return func(executor *OperationExecutor) {
 		executor.bestEffort = bestEffort
 	}
 }
 
-// NewDGoExecutor creates a new DGoExecutor
-func NewDGoExecutor(client *dgo.Dgraph) *DGoExecutor {
-	return &DGoExecutor{
+// NewDGoExecutor creates a new OperationExecutor
+func NewDGoExecutor(client *dgo.Dgraph) *OperationExecutor {
+	return &OperationExecutor{
 		client: client,
 	}
 }
@@ -65,7 +65,7 @@ func NewDGoExecutor(client *dgo.Dgraph) *DGoExecutor {
 // get merged into a single one.
 // the transaction will be automatically committed if a custom tnx is not provided.
 // only non-readonly transactions will be committed.
-func (executor DGoExecutor) ExecuteQueries(ctx context.Context, queries ...QueryBuilder) (*Response, error) {
+func (executor OperationExecutor) ExecuteQueries(ctx context.Context, queries ...QueryBuilder) (*Response, error) {
 	if err := executor.ensureClient(); err != nil {
 		return nil, err
 	}
@@ -98,7 +98,7 @@ func (executor DGoExecutor) ExecuteQueries(ctx context.Context, queries ...Query
 
 // ExecuteMutations executes one ore more mutations.
 // the transaction will be automatically committed if a custom tnx is not provided.
-func (executor DGoExecutor) ExecuteMutations(ctx context.Context, mutations ...MutationBuilder) (*Response, error) {
+func (executor OperationExecutor) ExecuteMutations(ctx context.Context, mutations ...MutationBuilder) (*Response, error) {
 	if err := executor.ensureClient(); err != nil {
 		return nil, err
 	}
@@ -163,7 +163,7 @@ func (executor DGoExecutor) ExecuteMutations(ctx context.Context, mutations ...M
 	return executor.toResponse(resp, queries...)
 }
 
-func (executor DGoExecutor) toResponse(resp *api.Response, queries ...QueryBuilder) (*Response, error) {
+func (executor OperationExecutor) toResponse(resp *api.Response, queries ...QueryBuilder) (*Response, error) {
 	var dataPathKey string
 
 	if len(queries) == 1 {
@@ -221,14 +221,14 @@ func mutationData(mutation MutationBuilder) (updateData []byte, deleteData []byt
 	return setDataBytes, deleteDataBytes, nil
 }
 
-func (executor DGoExecutor) ensureClient() error {
+func (executor OperationExecutor) ensureClient() error {
 	if executor.client == nil {
 		return errors.New("cannot execute query without setting a dqlx. use DClient() to set one")
 	}
 	return nil
 }
 
-func (executor DGoExecutor) getTnx() *dgo.Txn {
+func (executor OperationExecutor) getTnx() *dgo.Txn {
 	tx := executor.tnx
 
 	if tx == nil {

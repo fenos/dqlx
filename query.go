@@ -129,7 +129,7 @@ func (builder QueryBuilder) Filter(filters ...DQLizer) QueryBuilder {
 	return builder
 }
 
-func (builder QueryBuilder) Paginate(pagination Pagination) QueryBuilder {
+func (builder QueryBuilder) Paginate(pagination Cursor) QueryBuilder {
 	builder.rootEdge.Pagination = pagination
 	return builder
 }
@@ -149,7 +149,7 @@ func (builder QueryBuilder) Edge(fullPath string, queryParts ...DQLizer) QueryBu
 				builder = builder.Filter(part)
 			case fields:
 				builder = builder.Fields(cast.predicates...)
-			case Pagination:
+			case Cursor:
 				builder = builder.Paginate(cast)
 			case orderBy:
 				builder = builder.Order(cast)
@@ -163,6 +163,14 @@ func (builder QueryBuilder) Edge(fullPath string, queryParts ...DQLizer) QueryBu
 		}
 		return builder
 	})
+}
+
+func (builder QueryBuilder) EdgeAs(as string, fullPath string, queryParts ...DQLizer) QueryBuilder {
+	return builder.Edge(fullPath, queryParts...).As(as)
+}
+
+func (builder QueryBuilder) EdgePath(fullPath []string, queryParts ...DQLizer) QueryBuilder {
+	return builder.Edge(EdgePath(fullPath...), queryParts...)
 }
 
 func (builder QueryBuilder) EdgeFn(fullPath string, fn func(builder QueryBuilder) QueryBuilder) QueryBuilder {
@@ -183,13 +191,17 @@ func (builder QueryBuilder) WithDClient(client *dgo.Dgraph) QueryBuilder {
 	return builder
 }
 
-func (builder QueryBuilder) Execute(ctx context.Context, options ...ExecutorOptionFn) (*Response, error) {
+func (builder QueryBuilder) Execute(ctx context.Context, options ...OperationExecutorOptionFn) (*Response, error) {
 	executor := NewDGoExecutor(builder.client)
 
 	for _, option := range options {
 		option(executor)
 	}
 	return executor.ExecuteQueries(ctx, builder)
+}
+
+func (builder QueryBuilder) GetName() string {
+	return builder.rootEdge.Name
 }
 
 func (builder QueryBuilder) addEdgeFn(query QueryBuilder, fn func(builder QueryBuilder) QueryBuilder) QueryBuilder {

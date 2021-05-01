@@ -2,6 +2,7 @@ package dqlx
 
 import (
 	"context"
+
 	"github.com/dgraph-io/dgo/v200"
 	"github.com/dgraph-io/dgo/v200/protos/api"
 	"google.golang.org/grpc"
@@ -31,10 +32,10 @@ type DB interface {
 
 	Mutation() MutationBuilder
 
-	ExecuteQueries(ctx context.Context, queries []QueryBuilder, options ...ExecutorOptionFn) (*Response, error)
-	ExecuteMutations(ctx context.Context, mutations []MutationBuilder, options ...ExecutorOptionFn) (*Response, error)
+	ExecuteQueries(ctx context.Context, queries []QueryBuilder, options ...OperationExecutorOptionFn) (*Response, error)
+	ExecuteMutations(ctx context.Context, mutations []MutationBuilder, options ...OperationExecutorOptionFn) (*Response, error)
 
-	Variable(rootQueryFn *FilterFn) QueryBuilder
+	Schema() *SchemaBuilder
 	NewTxn() *dgo.Txn
 	NewReadOnlyTxn() *dgo.Txn
 	GetDgraph() *dgo.Dgraph
@@ -86,18 +87,13 @@ func (dqlx *dqlx) QueryEdge(edgeName string, rootQueryFn *FilterFn) QueryBuilder
 	return QueryEdge(edgeName, rootQueryFn).WithDClient(dqlx.dgraph)
 }
 
-// Variable returns a Variable builder
-func (dqlx *dqlx) Variable(rootQueryFn *FilterFn) QueryBuilder {
-	return Variable(rootQueryFn).WithDClient(dqlx.dgraph)
-}
-
 // Mutation returns a MutationBuilder
 func (dqlx *dqlx) Mutation() MutationBuilder {
 	return Mutation().WithDClient(dqlx.dgraph)
 }
 
 // ExecuteQueries executes multiple queries joining them into 1 request
-func (dqlx *dqlx) ExecuteQueries(ctx context.Context, queries []QueryBuilder, options ...ExecutorOptionFn) (*Response, error) {
+func (dqlx *dqlx) ExecuteQueries(ctx context.Context, queries []QueryBuilder, options ...OperationExecutorOptionFn) (*Response, error) {
 	executor := NewDGoExecutor(dqlx.dgraph)
 	for _, option := range options {
 		option(executor)
@@ -106,12 +102,17 @@ func (dqlx *dqlx) ExecuteQueries(ctx context.Context, queries []QueryBuilder, op
 }
 
 // ExecuteMutations executes multiple mutations
-func (dqlx *dqlx) ExecuteMutations(ctx context.Context, mutations []MutationBuilder, options ...ExecutorOptionFn) (*Response, error) {
+func (dqlx *dqlx) ExecuteMutations(ctx context.Context, mutations []MutationBuilder, options ...OperationExecutorOptionFn) (*Response, error) {
 	executor := NewDGoExecutor(dqlx.dgraph)
 	for _, option := range options {
 		option(executor)
 	}
 	return executor.ExecuteMutations(ctx, mutations...)
+}
+
+// Schema returns a schema builder
+func (dqlx *dqlx) Schema() *SchemaBuilder {
+	return NewSchema().WithClient(dqlx.dgraph)
 }
 
 // NewTxn creates a new transaction

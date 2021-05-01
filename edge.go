@@ -12,7 +12,7 @@ type edge struct {
 	Selection  selectionSet
 	RootFilter DQLizer
 	Filters    []DQLizer
-	Pagination Pagination
+	Pagination Cursor
 	Order      []DQLizer
 	Group      []DQLizer
 	Facets     []DQLizer
