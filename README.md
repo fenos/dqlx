@@ -6,7 +6,7 @@ It aims to simplify the interaction with the awesome Dgraph database allowing yo
 ---
 
 ### Status
-The project is getting close to its first official release v1.0
+The project is getting close to its first official release
 
 ### Why?
 The DGraph query language is awesome! it is really powerful, and you can achieve a lot with it.
