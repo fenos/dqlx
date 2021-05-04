@@ -28,11 +28,11 @@ func Test_Simple_Query(t *testing.T) {
 
 	expected := dql.Minify(`
 		query Bladerunner($0:string, $1:string) {
-			bladerunner(func: eq(<item>,$0)) @filter(eq(<field1>,$1)) {
-				uid
-				name
-				initial_release_date
-				netflix_id
+			<bladerunner>(func: eq(<item>,$0)) @filter(eq(<field1>,$1)) {
+				<uid>
+				<name>
+				<initial_release_date>
+				<netflix_id>
 			}
 		}
 	`)
@@ -75,25 +75,25 @@ func Test_Query_Nested(t *testing.T) {
 
 	expected := dql.Minify(`
 		query Bladerunner($0:string) {
-			bladerunner(func: eq(<name@en>,$0)) {
-				uid
-				name
-				initial_release_date
-				netflix_id
-				authors {
-					uid
-					name
-					surname
-					age
+			<bladerunner>(func: eq(<name@en>,$0)) {
+				<uid>
+				<name>
+				<initial_release_date>
+				<netflix_id>
+				<authors> {
+					<uid>
+					<name>
+					<surname>
+					<age>
 				}
-				actors {
-					uid
-					surname
-					rewards {
-						uid
-						points
-						venues {
-							street
+				<actors> {
+					<uid>
+					<surname>
+					<rewards> {
+						<uid>
+						<points>
+						<venues> {
+							<street>
 						}
 					}
 				}
@@ -142,24 +142,24 @@ func Test_Query_Filter_Nested(t *testing.T) {
 
 	expected := dql.Minify(`
 		query Bladerunner($0:string, $1:int, $2:int, $3:int, $4:int, $5:int) {
-			bladerunner(func: eq(<name@en>,$0)) {
-				uid
-				name
-				initial_release_date
-				netflix_id
-				authors @filter(eq(<age>,$1)) {
-					uid
-					name
-					surname
-					age
+			<bladerunner>(func: eq(<name@en>,$0)) {
+				<uid>
+				<name>
+				<initial_release_date>
+				<netflix_id>
+				<authors> @filter(eq(<age>,$1)) {
+					<uid>
+					<name>
+					<surname>
+					<age>
 				}
-				actors @filter(gt(<age>,[$2,$3,$4])) {
-					uid
-					surname
-					age
-					rewards @filter(gt(<points>,$5)) {
-						uid
-						points
+				<actors> @filter(gt(<age>,[$2,$3,$4])) {
+					<uid>
+					<surname>
+					<age>
+					<rewards> @filter(gt(<points>,$5)) {
+						<uid>
+						<points>
 					}
 				}
 			}
@@ -212,16 +212,16 @@ func Test_Query_Connecting_Filter(t *testing.T) {
 
 	expected := dql.Minify(`
 		query Bladerunner($0:string, $1:string, $2:string, $3:string, $4:int, $5:string, $6:int) {
-			bladerunner(func: eq(<name@en>,$0)) @filter((eq(<name>,$1) OR eq(<name>,$2))) {
-				uid
-				name
-				initial_release_date
-				netflix_id
-				authors @filter(((eq(<name>,$3) AND gt(<age>,$4)) OR (eq(<name>,$5) AND lt(<age>,$6)))) {
-					uid
-					name
-					surname
-					age
+			<bladerunner>(func: eq(<name@en>,$0)) @filter((eq(<name>,$1) OR eq(<name>,$2))) {
+				<uid>
+				<name>
+				<initial_release_date>
+				<netflix_id>
+				<authors> @filter(((eq(<name>,$3) AND gt(<age>,$4)) OR (eq(<name>,$5) AND lt(<age>,$6)))) {
+					<uid>
+					<name>
+					<surname>
+					<age>
 				}
 			}
 		}
@@ -291,21 +291,21 @@ func Test_Query_Pagination(t *testing.T) {
 
 	expected := dql.Minify(`
 		query Bladerunner($0:string, $1:int, $2:int, $3:string, $4:int, $5:int, $6:string, $7:int, $8:int, $9:string, $10:int) {
-			bladerunner(func: eq(<name@en>,$0),first:$1,offset:$2,after:$3) {
-				uid
-				name
-				initial_release_date
-				netflix_id
-				authors(first:$4,offset:$5,after:$6) {
-					uid
-					name
-					surname
-					age
+			<bladerunner>(func: eq(<name@en>,$0),first:$1,offset:$2,after:$3) {
+				<uid>
+				<name>
+				<initial_release_date>
+				<netflix_id>
+				<authors>(first:$4,offset:$5,after:$6) {
+					<uid>
+					<name>
+					<surname>
+					<age>
 				}
-				actors(first:$7,offset:$8,after:$9) @filter(gt(<age>,$10))  {
-					uid
-					surname
-					age
+				<actors>(first:$7,offset:$8,after:$9) @filter(gt(<age>,$10))  {
+					<uid>
+					<surname>
+					<age>
 				}
 			}
 		}
@@ -342,18 +342,18 @@ func Test_Query_Variable(t *testing.T) {
 	expected := dql.Minify(`
 		query Bladerunner($0:string, $1:string) {
 			var(func: eq(<name>,$0)) {
-				film {
-					performance {
-					 D AS genre
+				<film> {
+					<performance> {
+					 	D AS <genre>
 					}
 				}
 			}
 
-			bladerunner(func: eq(<item>,$1)) @filter(eq(<field1>,D)) {
-				uid
-				name
-				initial_release_date
-				netflix_id
+			<bladerunner>(func: eq(<item>,$1)) @filter(eq(<field1>,D)) {
+				<uid>
+				<name>
+				<initial_release_date>
+				<netflix_id>
 			}
 		}
 	`)
@@ -384,18 +384,18 @@ func Test_Query_Value_Variable(t *testing.T) {
 	expected := dql.Minify(`
 		query Bladerunner($0:string, $1:string) {
 			var(func: eq(<name>,$0)) {
-				film {
-					performance { 
-						D AS genre
+				<film> {
+					<performance> { 
+						D AS <genre>
 					}
 				}
 			}
 
-			bladerunner(func: eq(<item>,$1)) @filter(uid(val(<D>)) AND uid(<D>)) {
-				uid
-				name
-				initial_release_date
-				netflix_id
+			<bladerunner>(func: eq(<item>,$1)) @filter(uid(val(<D>)) AND uid(<D>)) {
+				<uid>
+				<name>
+				<initial_release_date>
+				<netflix_id>
 			}
 		}
 	`)
@@ -423,14 +423,14 @@ func Test_Query_OrderBy(t *testing.T) {
 
 	expected := dql.Minify(`
 		query Bladerunner($0:string, $1:int) {
-			bladerunner(func: eq(<item>,$0),orderasc:<name>,orderdesc:val(<initial_release_date>)) {
-				uid
-				name
-				initial_release_date
-				netflix_id
-				films(first:$1)(orderdesc:<date>) {
-					id
-					date
+			<bladerunner>(func: eq(<item>,$0),orderasc:<name>,orderdesc:val(<initial_release_date>)) {
+				<uid>
+				<name>
+				<initial_release_date>
+				<netflix_id>
+				<films>(first:$1)(orderdesc:<date>) {
+					<id>
+					<date>
 				}
 			}
 		}
@@ -453,33 +453,33 @@ func Test_Query_GroupBy(t *testing.T) {
 
 	query, variables, err := dql.
 		QueryEdge("bladerunner", dql.EqFn("item", "value")).
-		Fields(`
-			uid
-			name
-			initial_release_date
-			netflix_id
-		`).
-		Edge("films", dql.Fields(`
-			total_movies:val(a)
-		`)).
+		Fields(
+			"uid",
+			"name",
+			"initial_release_date",
+			"netflix_id",
+		).
+		Edge("films", dql.Fields(
+			dql.Computed("total_movies", dql.Val("a")),
+		)).
 		Variable(variable).
 		ToDQL()
 
 	expected := dql.Minify(`
 		query Bladerunner($0:string, $1:string) {
 			var(func: eq(<name>,$0)) {
-				film @groupby(<genre>) {
-					a AS genre
+				<film> @groupby(<genre>) {
+					a AS <genre>
 				}
 			}
 
-			bladerunner(func: eq(<item>,$1)) {
-				uid
-				name
-				initial_release_date
-				netflix_id
-				films {
-					total_movies:val(a)
+			<bladerunner>(func: eq(<item>,$1)) {
+				<uid>
+				<name>
+				<initial_release_date>
+				<netflix_id>
+				<films> {
+					<total_movies>:val(<a>)
 				}
 			}
 		}
@@ -514,13 +514,13 @@ func Test_Query_Facets(t *testing.T) {
 
 	expected := dql.Minify(`
 		query Bladerunner($0:string, $1:bool, $2:bool) {
-			bladerunner(func: eq(<item>,$0)) @facets {
-				uid
-				name
-				initial_release_date
-				netflix_id
-				films @facets(eq(<close>,$1) AND eq(<relative>,$2)) @facets(<relative>) {
-					name
+			<bladerunner>(func: eq(<item>,$0)) @facets {
+				<uid>
+				<name>
+				<initial_release_date>
+				<netflix_id>
+				<films> @facets(eq(<close>,$1) AND eq(<relative>,$2)) @facets(<relative>) {
+					<name>
 				}
 			}
 		}
@@ -574,25 +574,25 @@ func Test_Query_Edge_From_Query(t *testing.T) {
 
 	expected := dql.Minify(`
 		query Bladerunner($0:string) {
-			bladerunner(func: eq(<name@en>,$0)) {
-				uid
-				name
-				initial_release_date
-				netflix_id
-				authors {
-					uid
-					name
-					surname
-					age
+			<bladerunner>(func: eq(<name@en>,$0)) {
+				<uid>
+				<name>
+				<initial_release_date>
+				<netflix_id>
+				<authors> {
+					<uid>
+					<name>
+					<surname>
+					<age>
 				}
-				actors {
-					uid
-					surname
-					rewards {
-						uid
-						points
-						venues {
-							street
+				<actors> {
+					<uid>
+					<surname>
+					<rewards> {
+						<uid>
+						<points>
+						<venues> {
+							<street>
 						}
 					}
 				}
@@ -630,11 +630,11 @@ func Test_List_function_Query(t *testing.T) {
 
 	expected := dql.Minify(`
 		query Bladerunner($0:string, $1:string, $2:datetime, $3:datetime) {
-			bladerunner(func: uid($0)) @filter(uid_in(<name>,$1) AND between(<release_date>,$2,$3)) {
-				uid
-				name
-				initial_release_date
-				netflix_id
+			<bladerunner>(func: uid($0)) @filter(uid_in(<name>,$1) AND between(<release_date>,$2,$3)) {
+				<uid>
+				<name>
+				<initial_release_date>
+				<netflix_id>
 			}
 		}
 	`)

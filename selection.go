@@ -2,11 +2,12 @@ package dqlx
 
 import (
 	"bytes"
+	"fmt"
 	"strings"
 )
 
 type selectionSet struct {
-	Fields          []string
+	Fields          DQLizer
 	ParentName      string
 	Edges           map[string][]QueryBuilder
 	HasParentFields bool
@@ -16,15 +17,11 @@ type selectionSet struct {
 func (selection selectionSet) ToDQL() (query string, args []interface{}, err error) {
 	writer := bytes.Buffer{}
 
-	var fieldNames []string
-	for _, fieldName := range selection.Fields {
-		if fieldName == "" {
-			continue
+	if selection.Fields != nil {
+		if err := addPart(selection.Fields, &writer, &args); err != nil {
+			return "", nil, err
 		}
-		fieldNames = append(fieldNames, fieldName)
 	}
-
-	writer.WriteString(strings.Join(fieldNames, " "))
 
 	// nested childrenEdges
 	nestedEdges, ok := selection.Edges[selection.ParentName]
@@ -34,6 +31,7 @@ func (selection selectionSet) ToDQL() (query string, args []interface{}, err err
 	}
 
 	statements := make([]string, 0, len(nestedEdges))
+
 	for _, queryBuilder := range nestedEdges {
 		nestedEdge, edgesArgs, err := queryBuilder.rootEdge.ToDQL()
 		args = append(args, edgesArgs...)
@@ -56,46 +54,87 @@ func (selection selectionSet) ToDQL() (query string, args []interface{}, err err
 }
 
 type fields struct {
-	predicates []string
+	predicates []interface{}
 }
 
-func Fields(fieldNames ...string) DQLizer {
-	var allFields []string
-
-	for _, field := range fieldNames {
-		combinedFields := ParseFields(field)
-		allFields = append(allFields, combinedFields...)
-	}
-
-	return fields{
-		predicates: allFields,
-	}
+func Fields(fieldNames ...interface{}) DQLizer {
+	return fields{fieldNames}
 }
 
 func (fields fields) ToDQL() (query string, args []interface{}, err error) {
-	return strings.Join(fields.predicates, " "), nil, nil
+	var selectedFields []string
+
+	for _, field := range fields.predicates {
+		switch requestField := field.(type) {
+		case computedField:
+			computedDql, computedArgs, err := requestField.ToDQL()
+
+			if err != nil {
+				return "", nil, err
+			}
+
+			args = append(args, computedArgs)
+			selectedFields = append(selectedFields, computedDql)
+		case string:
+			fieldString := parseFields(requestField)
+			selectedFields = append(selectedFields, fieldString...)
+		default:
+			return "", nil, fmt.Errorf("fields can only accept strings or computed values, givem %v", requestField)
+		}
+	}
+
+	return strings.Join(selectedFields, " "), args, nil
 }
 
-func ParseFields(fields string) []string {
+type computedField struct {
+	alias string
+	value DQLizer
+}
+
+func Computed(alias string, predicate DQLizer) DQLizer {
+	return computedField{
+		alias: alias,
+		value: predicate,
+	}
+}
+
+func (computedField computedField) ToDQL() (query string, args []interface{}, err error) {
+	computedValue, args, err := computedField.value.ToDQL()
+
+	if err != nil {
+		return "", nil, err
+	}
+
+	predicate := escapeField(Minify(computedField.alias))
+
+	return fmt.Sprintf("%s:%s", predicate, computedValue), args, nil
+}
+
+func parseFields(fields string) []string {
 	var parsedFields []string
 	fieldsParts := strings.Split(fields, "\n")
 
 	for _, fieldPart := range fieldsParts {
+		fieldPart = Minify(fieldPart)
 		if fieldPart == "" {
 			continue
 		}
-		escapedField := Minify(escapeField(fieldPart))
+		escapedField := escapeField(fieldPart)
 		parsedFields = append(parsedFields, escapedField)
 	}
 	return parsedFields
 }
 
 func escapeField(field string) string {
-	removeCharacters := []string{"{", "}"}
+	field = escapeSpecialChars(field)
+	parts := strings.Fields(field)
 
-	escapedField := field
-	for _, char := range removeCharacters {
-		escapedField = strings.ReplaceAll(field, char, "")
+	if len(parts) > 2 {
+		varName := parts[0]
+		asKeyword := strings.ToUpper(parts[1])
+
+		return fmt.Sprintf("%s %s <%s>", varName, asKeyword, strings.Join(parts[2:], ""))
 	}
-	return escapedField
+
+	return fmt.Sprintf("<%s>", field)
 }

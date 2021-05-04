@@ -38,16 +38,16 @@ func Test_Multiple_Blocks(t *testing.T) {
 
 	expected := dql.Minify(`
 		query Bladerunner_Bladerunner2($0:string, $1:string, $2:string, $3:string) {
-			bladerunner(func: eq(<item>,$0)) @filter(eq(<field1>,$1)) {
-				uid
-				super_alias:name
-				initial_release_date
-				d AS netflix_id
+			<bladerunner>(func: eq(<item>,$0)) @filter(eq(<field1>,$1)) {
+				<uid>
+				<super_alias:name>
+				<initial_release_date>
+				d AS <netflix_id>
 			}
 
-			bladerunner2(func: eq(<item>,$2)) @filter(eq(<field1>,$3)) {
-				uid
-				name
+			<bladerunner2>(func: eq(<item>,$2)) @filter(eq(<field1>,$3)) {
+				<uid>
+				<name>
 			}
 		}
 	`)

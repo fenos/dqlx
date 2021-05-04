@@ -2,8 +2,9 @@ package dqlx
 
 import (
 	"context"
-	"github.com/dgraph-io/dgo/v200"
 	"strings"
+
+	"github.com/dgraph-io/dgo/v200"
 )
 
 type QueryBuilder struct {
@@ -74,7 +75,7 @@ func (builder QueryBuilder) Variable(queryBuilder QueryBuilder) QueryBuilder {
 	return builder
 }
 
-func (builder QueryBuilder) Fields(fieldNames ...string) QueryBuilder {
+func (builder QueryBuilder) Fields(fieldNames ...interface{}) QueryBuilder {
 	if len(fieldNames) == 0 {
 		return builder
 	}
@@ -85,7 +86,7 @@ func (builder QueryBuilder) Fields(fieldNames ...string) QueryBuilder {
 		ParentName:      builder.rootEdge.Name,
 		HasParentFields: len(allFields.predicates) > 0,
 		Edges:           builder.childrenEdges,
-		Fields:          allFields.predicates,
+		Fields:          allFields,
 	}
 
 	builder.rootEdge.Selection = selection
@@ -214,7 +215,7 @@ func (builder QueryBuilder) addEdgeFn(query QueryBuilder, fn func(builder QueryB
 	edgeBuilder := query
 	edgeBuilder.rootEdge.IsRoot = false
 	edgeBuilder.rootEdge.Selection.Edges = builder.childrenEdges
-	edgeBuilder.rootEdge.Selection.HasParentFields = len(builder.rootEdge.Selection.Fields) > 0
+	edgeBuilder.rootEdge.Selection.HasParentFields = builder.rootEdge.Selection.Fields != nil
 	edgeBuilder.childrenEdges = builder.childrenEdges
 
 	var parentPath string

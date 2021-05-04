@@ -547,6 +547,11 @@ type RawExpression struct {
 	Val string
 }
 
+// ToDQL returns the DQL statement for a RawExpression expression, use with care
+func (rawExpression RawExpression) ToDQL() (query string, args []interface{}, err error) {
+	return rawExpression.Val, nil, nil
+}
+
 // Expr returns a RawExpression
 func Expr(value string) RawExpression {
 	return RawExpression{value}

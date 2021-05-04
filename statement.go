@@ -9,12 +9,18 @@ import (
 )
 
 func EscapePredicate(predicate string) string {
+	predicate = escapeSpecialChars(predicate)
+	return "<" + predicate + ">"
+}
+
+func escapeSpecialChars(predicate string) string {
 	escapeCharacters := []string{"^", "}", "|", "{", "\\", ",", "<", ">", "\""}
 
 	for _, char := range escapeCharacters {
 		predicate = strings.ReplaceAll(predicate, char, "")
 	}
-	return "<" + predicate + ">"
+
+	return predicate
 }
 
 func toVariables(rawVariables map[int]interface{}) (variables map[string]string, placeholders []string) {
