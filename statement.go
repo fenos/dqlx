@@ -8,9 +8,24 @@ import (
 	"time"
 )
 
-func EscapePredicate(predicate string) string {
-	predicate = escapeSpecialChars(predicate)
-	return "<" + predicate + ">"
+func EscapePredicate(field string) string {
+	field = Minify(field)
+	field = escapeSpecialChars(field)
+	parts := strings.Fields(field)
+	directive := ""
+
+	if len(parts) > 2 {
+		varName := parts[0]
+		asKeyword := strings.ToUpper(parts[1])
+		predicate := strings.Join(parts[2:], "")
+
+		predicate, directive = splitDirective(predicate)
+
+		return fmt.Sprintf("%s %s <%s>%s", varName, asKeyword, predicate, directive)
+	}
+
+	field, directive = splitDirective(field)
+	return fmt.Sprintf("<%s>%s", field, directive)
 }
 
 func escapeSpecialChars(predicate string) string {

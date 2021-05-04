@@ -75,7 +75,7 @@ func Test_Query_Nested(t *testing.T) {
 
 	expected := dql.Minify(`
 		query Bladerunner($0:string) {
-			<bladerunner>(func: eq(<name@en>,$0)) {
+			<bladerunner>(func: eq(<name>@en,$0)) {
 				<uid>
 				<name>
 				<initial_release_date>
@@ -142,7 +142,7 @@ func Test_Query_Filter_Nested(t *testing.T) {
 
 	expected := dql.Minify(`
 		query Bladerunner($0:string, $1:int, $2:int, $3:int, $4:int, $5:int) {
-			<bladerunner>(func: eq(<name@en>,$0)) {
+			<bladerunner>(func: eq(<name>@en,$0)) {
 				<uid>
 				<name>
 				<initial_release_date>
@@ -212,7 +212,7 @@ func Test_Query_Connecting_Filter(t *testing.T) {
 
 	expected := dql.Minify(`
 		query Bladerunner($0:string, $1:string, $2:string, $3:string, $4:int, $5:string, $6:int) {
-			<bladerunner>(func: eq(<name@en>,$0)) @filter((eq(<name>,$1) OR eq(<name>,$2))) {
+			<bladerunner>(func: eq(<name>@en,$0)) @filter((eq(<name>,$1) OR eq(<name>,$2))) {
 				<uid>
 				<name>
 				<initial_release_date>
@@ -291,7 +291,7 @@ func Test_Query_Pagination(t *testing.T) {
 
 	expected := dql.Minify(`
 		query Bladerunner($0:string, $1:int, $2:int, $3:string, $4:int, $5:int, $6:string, $7:int, $8:int, $9:string, $10:int) {
-			<bladerunner>(func: eq(<name@en>,$0),first:$1,offset:$2,after:$3) {
+			<bladerunner>(func: eq(<name>@en,$0),first:$1,offset:$2,after:$3) {
 				<uid>
 				<name>
 				<initial_release_date>
@@ -574,7 +574,7 @@ func Test_Query_Edge_From_Query(t *testing.T) {
 
 	expected := dql.Minify(`
 		query Bladerunner($0:string) {
-			<bladerunner>(func: eq(<name@en>,$0)) {
+			<bladerunner>(func: eq(<name>@en,$0)) {
 				<uid>
 				<name>
 				<initial_release_date>

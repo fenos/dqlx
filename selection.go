@@ -105,7 +105,7 @@ func (computedField computedField) ToDQL() (query string, args []interface{}, er
 		return "", nil, err
 	}
 
-	predicate := escapeField(Minify(computedField.alias))
+	predicate := EscapePredicate(Minify(computedField.alias))
 
 	return fmt.Sprintf("%s:%s", predicate, computedValue), args, nil
 }
@@ -115,26 +115,23 @@ func parseFields(fields string) []string {
 	fieldsParts := strings.Split(fields, "\n")
 
 	for _, fieldPart := range fieldsParts {
-		fieldPart = Minify(fieldPart)
-		if fieldPart == "" {
+		if strings.TrimSpace(fieldPart) == "" {
 			continue
 		}
-		escapedField := escapeField(fieldPart)
+		escapedField := EscapePredicate(fieldPart)
 		parsedFields = append(parsedFields, escapedField)
 	}
 	return parsedFields
 }
 
-func escapeField(field string) string {
-	field = escapeSpecialChars(field)
-	parts := strings.Fields(field)
+func splitDirective(predicate string) (string, string) {
+	predicateParts := strings.Split(predicate, "@")
+	directive := ""
 
-	if len(parts) > 2 {
-		varName := parts[0]
-		asKeyword := strings.ToUpper(parts[1])
-
-		return fmt.Sprintf("%s %s <%s>", varName, asKeyword, strings.Join(parts[2:], ""))
+	if len(predicateParts) > 1 {
+		predicate = predicateParts[0]
+		directive = "@" + strings.Join(predicateParts[1:], "")
 	}
 
-	return fmt.Sprintf("<%s>", field)
+	return predicate, directive
 }
