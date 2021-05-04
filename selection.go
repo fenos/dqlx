@@ -12,6 +12,7 @@ type selectionSet struct {
 	HasParentFields bool
 }
 
+// ToDQL returns the DQL statements for representing a selection set
 func (selection selectionSet) ToDQL() (query string, args []interface{}, err error) {
 	writer := bytes.Buffer{}
 
@@ -62,7 +63,7 @@ func Fields(fieldNames ...string) DQLizer {
 	var allFields []string
 
 	for _, field := range fieldNames {
-		combinedFields := strings.Fields(field)
+		combinedFields := ParseFields(field)
 		allFields = append(allFields, combinedFields...)
 	}
 
@@ -75,10 +76,26 @@ func (fields fields) ToDQL() (query string, args []interface{}, err error) {
 	return strings.Join(fields.predicates, " "), nil, nil
 }
 
-func FieldList(fields []string) string {
-	return strings.Join(fields, symbolEdgeTraversal)
+func ParseFields(fields string) []string {
+	var parsedFields []string
+	fieldsParts := strings.Split(fields, "\n")
+
+	for _, fieldPart := range fieldsParts {
+		if fieldPart == "" {
+			continue
+		}
+		escapedField := Minify(escapeField(fieldPart))
+		parsedFields = append(parsedFields, escapedField)
+	}
+	return parsedFields
 }
 
-func ParseFields(fields string) []string {
-	return strings.Fields(fields)
+func escapeField(field string) string {
+	removeCharacters := []string{"{", "}"}
+
+	escapedField := field
+	for _, char := range removeCharacters {
+		escapedField = strings.ReplaceAll(field, char, "")
+	}
+	return escapedField
 }

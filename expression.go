@@ -91,7 +91,7 @@ func (filter filterKV) toDQL(funcType FuncType) (query string, args []interface{
 			return "", nil, err
 		}
 
-		fnStatement := fmt.Sprintf("%s(%s,%s)", funcType, key, placeholder)
+		fnStatement := fmt.Sprintf("%s(%s,%s)", funcType, EscapePredicate(key), placeholder)
 
 		expressions = append(expressions, fnStatement)
 		args = append(args, fnArgs...)
@@ -252,7 +252,7 @@ func GtFn(predicate string, value interface{}) *FilterFn {
 func HasFn(predicate string) *FilterFn {
 	expression := filterExpr{
 		funcType: hasFunc,
-		value:    Expr(predicate),
+		value:    Predicate(predicate),
 	}
 	return &FilterFn{expression}
 }
@@ -268,7 +268,7 @@ func Has(predicate string) DQLizer {
 func TypeFn(predicate string) *FilterFn {
 	expression := filterExpr{
 		funcType: typeFunc,
-		value:    Expr(predicate),
+		value:    Predicate(predicate),
 	}
 	return &FilterFn{expression}
 }
@@ -324,19 +324,19 @@ func AnyOfTermsFn(predicate string, value interface{}) *FilterFn {
 // Regexp syntactic sugar for the Regexp expression,
 // Expression: regexp(predicate, /pattern/)
 // Example: dql.Regexp{"predicate": /pattern/}
-type Regexp filterKV
+type Regexp map[string]string
 
 // ToDQL returns the DQL statement for the 'regexp' expression
 func (regexp Regexp) ToDQL() (query string, args []interface{}, err error) {
 	// Value can't be escaped
-	rawRegexp := Regexp{}
+	rawRegexp := filterKV{}
 	for key, value := range regexp {
 		rawRegexp[key] = Expr(value)
 	}
 
 	return filterExpr{
 		funcType: regexpFunc,
-		value:    filterKV(rawRegexp),
+		value:    rawRegexp,
 	}.ToDQL()
 }
 
@@ -477,31 +477,31 @@ func FullTextFn(predicate string, pattern string) *FilterFn {
 // Sum represent the 'sum' expression
 // Expression: sum(val(predicate))
 func Sum(predicate string) RawExpression {
-	return Expr(string(sumFunc) + "(val(" + predicate + "))")
+	return Expr(string(sumFunc) + "(val(" + EscapePredicate(predicate) + "))")
 }
 
 // Avg represent the 'avg' expression
 // Expression: avg(val(predicate))
 func Avg(predicate string) RawExpression {
-	return Expr("avg(val(" + predicate + "))")
+	return Expr("avg(val(" + EscapePredicate(predicate) + "))")
 }
 
 // Min represent the 'min' expression
 // Expression: min(val(predicate))
 func Min(predicate string) RawExpression {
-	return Expr("min(val(" + predicate + "))")
+	return Expr("min(val(" + EscapePredicate(predicate) + "))")
 }
 
 // Max represent the 'max' expression
 // Expression: max(val(predicate))
 func Max(predicate string) RawExpression {
-	return Expr("max(val(" + predicate + "))")
+	return Expr("max(val(" + EscapePredicate(predicate) + "))")
 }
 
 // Count represent the 'count' expression
 // Expression: count(predicate)
 func Count(predicate string) RawExpression {
-	return Expr(string(countFunc) + "(" + predicate + ")")
+	return Expr(string(countFunc) + "(" + EscapePredicate(predicate) + ")")
 }
 
 type between struct {
@@ -538,18 +538,28 @@ func (between between) ToDQL() (query string, args []interface{}, err error) {
 
 	args = append(args, argsTo...)
 
-	return fmt.Sprintf("%s(%s,%s,%s)", betweenFunc, between.predicate, placeholderFrom, placeholderTo), args, nil
+	return fmt.Sprintf("%s(%s,%s,%s)", betweenFunc, EscapePredicate(between.predicate), placeholderFrom, placeholderTo), args, nil
 }
 
 // RawExpression represents a raw expression
 // what you write what you get
 type RawExpression struct {
-	Val interface{}
+	Val string
+}
+
+// ToDQL returns the DQL statement for a raw expression, use carefully
+func (raw RawExpression) ToDQL() (query string, args []interface{}, err error) {
+	return raw.Val, nil, nil
 }
 
 // Expr returns a RawExpression
-func Expr(value interface{}) RawExpression {
+func Expr(value string) RawExpression {
 	return RawExpression{value}
+}
+
+// Predicate returns an escaped predicate
+func Predicate(predicate string) RawExpression {
+	return Expr(EscapePredicate(predicate))
 }
 
 // Val returns val expression
@@ -557,7 +567,7 @@ func Expr(value interface{}) RawExpression {
 func Val(ref string) filterExpr {
 	return filterExpr{
 		funcType: valFunc,
-		value:    Expr(ref),
+		value:    Predicate(ref),
 	}
 }
 
@@ -663,18 +673,23 @@ func OrderDesc(predicate interface{}) DQLizer {
 func (orderBy orderBy) ToDQL() (query string, args []interface{}, err error) {
 	predicate := orderBy.Predicate
 
-	if rawVal, ok := orderBy.Predicate.(filterExpr); ok {
-		if rawVal.funcType != valFunc {
-			return "", nil, fmt.Errorf("invalid function %s on order expression", rawVal.funcType)
+	switch val := orderBy.Predicate.(type) {
+	case filterExpr:
+		if val.funcType != valFunc {
+			return "", nil, fmt.Errorf("invalid function %s on order expression", val.funcType)
 		}
 
-		valDql, _, err := rawVal.ToDQL()
+		valDql, _, err := val.ToDQL()
 
 		if err != nil {
 			return "", nil, err
 		}
 
 		predicate = valDql
+	case string:
+		predicate = EscapePredicate(val)
+	default:
+		return "", nil, fmt.Errorf("order clause only accept Val() or string predicates given %v", val)
 	}
 
 	query = fmt.Sprintf("%s:%s", orderBy.Direction, predicate)
@@ -687,7 +702,7 @@ type group struct {
 
 // ToDQL returns the DQL statement for the 'group' expression
 func (group group) ToDQL() (query string, args []interface{}, err error) {
-	query = group.Predicate
+	query = EscapePredicate(group.Predicate)
 	return
 }
 
@@ -704,21 +719,17 @@ type facetExpr struct {
 func (facet facetExpr) ToDQL() (query string, args []interface{}, err error) {
 	var predicates []string
 	for _, predicate := range facet.Predicates {
-		if dqlizer, ok := predicate.(DQLizer); ok {
-			if err := addStatement([]DQLizer{dqlizer}, &predicates, &args); err != nil {
+
+		switch predicateCast := predicate.(type) {
+		case DQLizer:
+			if err := addStatement([]DQLizer{predicateCast}, &predicates, &args); err != nil {
 				return "", nil, err
 			}
-			continue
+		case string:
+			predicates = append(predicates, EscapePredicate(predicateCast))
+		default:
+			return "", nil, fmt.Errorf("facets accepts only DQlizers or string as value, given %v", predicateCast)
 		}
-
-		placeholder, valueArgs, valueErr := parseValue(predicate)
-
-		if valueErr != nil {
-			return "", nil, valueErr
-		}
-
-		predicates = append(predicates, placeholder)
-		args = append(args, valueArgs...)
 	}
 
 	writer := bytes.Buffer{}

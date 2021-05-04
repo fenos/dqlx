@@ -8,6 +8,15 @@ import (
 	"time"
 )
 
+func EscapePredicate(predicate string) string {
+	escapeCharacters := []string{"^", "}", "|", "{", "\\", ",", "<", ">", "\""}
+
+	for _, char := range escapeCharacters {
+		predicate = strings.ReplaceAll(predicate, char, "")
+	}
+	return "<" + predicate + ">"
+}
+
 func toVariables(rawVariables map[int]interface{}) (variables map[string]string, placeholders []string) {
 	variables = map[string]string{}
 	placeholders = make([]string, len(rawVariables))
