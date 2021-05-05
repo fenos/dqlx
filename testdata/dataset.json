@@ -187,5 +187,93 @@
         ]
       }
     ]
+  },
+  {
+    "uid": "0x2",
+    "name@en": "Ridley Scott",
+    "director.film": [
+      {
+        "uid": "0x1"
+      },
+      {
+        "name@en": "Alien",
+        "initial_release_date": "1979-05-25T00:00:00Z"
+      },
+      {
+        "name@en": "Black Rain",
+        "initial_release_date": "1989-09-22T00:00:00Z"
+      },
+      {
+        "name@en": "White Squall",
+        "initial_release_date": "1996-02-02T00:00:00Z"
+      },
+      {
+        "name@en": "Thelma & Louise",
+        "initial_release_date": "1991-05-24T00:00:00Z"
+      },
+      {
+        "name@en": "G.I. Jane",
+        "initial_release_date": "1997-08-22T00:00:00Z"
+      },
+      {
+        "name@en": "1492 Conquest of Paradise",
+        "initial_release_date": "1992-10-08T00:00:00Z"
+      },
+      {
+        "name@en": "The Duellists",
+        "initial_release_date": "1977-12-01T00:00:00Z"
+      },
+      {
+        "name@en": "Someone to Watch Over Me",
+        "initial_release_date": "1987-10-09T00:00:00Z"
+      },
+      {
+        "name@en": "Legend",
+        "initial_release_date": "1985-08-28T00:00:00Z"
+      },
+      {
+        "name@en": "Boy and Bicycle",
+        "initial_release_date": "1997-09-07T00:00:00Z"
+      }
+    ]
+  },
+  {
+    "name@en": "Ridley Scott"
+  },
+  {
+    "name@hi": "फरहान अख्तर",
+    "name@en": "Farhan Akhtar",
+    "director.film": [
+      {
+        "name@ru:hi:en": "दिल चाहता है",
+        "name@en": "Dil Chahta Hai",
+        "name@hi": "दिल चाहता है",
+        "name@ru": "Дон. test"
+      },
+      {
+        "name@ru:hi:en": "Дон. Главарь мафии 2",
+        "name@en": "Don 2",
+        "name@hi": "डॉन २",
+        "name@ru": "Дон. Главарь мафии 2"
+      },
+      {
+        "name@ru:hi:en": "पोज़िटिव",
+        "name@en": "Positive",
+        "name@hi": "पोज़िटिव",
+        "name@ru": "Дон. test"
+      },
+      {
+        "name@ru:hi:en": "लक्ष्य",
+        "name@en": "Lakshya",
+        "name@hi": "लक्ष्य",
+        "name@ru": "Дон. test"
+      },
+      {
+        "name@ru:hi:en": "Дон. Главарь мафии",
+        "name@en": "Don: The Chase Begins Again",
+        "name@hi": "डॉन",
+        "name@ru": "Дон. Главарь мафии"
+      }
+    ]
   }
 ]

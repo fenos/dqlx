@@ -12,7 +12,7 @@ import (
 // SchemaBuilder used to compose a Dgraph schema in a fluent manner
 type SchemaBuilder struct {
 	Predicates []*DGraphPredicate
-	Types      []*DGraphType
+	Types      []*dGraphType
 
 	client *dgo.Dgraph
 }
@@ -133,7 +133,7 @@ func (schema *SchemaBuilder) Type(name string, builderFn TypeBuilderFn, options 
 
 	builder := &TypeBuilder{
 		prefixFields: true,
-		DGraphType: &DGraphType{
+		dGraphType: &dGraphType{
 			name:       name,
 			predicates: nil,
 		},
@@ -146,7 +146,7 @@ func (schema *SchemaBuilder) Type(name string, builderFn TypeBuilderFn, options 
 
 	builderFn(builder)
 
-	schema.Types = append(schema.Types, builder.DGraphType)
+	schema.Types = append(schema.Types, builder.dGraphType)
 
 	return builder
 }

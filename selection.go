@@ -6,25 +6,25 @@ import (
 	"strings"
 )
 
-type selectionSet struct {
-	Fields          DQLizer
-	ParentName      string
-	Edges           map[string][]QueryBuilder
-	HasParentFields bool
+type node struct {
+	Attributes          DQLizer
+	ParentName          string
+	Edges               map[string][]QueryBuilder
+	HasParentAttributes bool
 }
 
 // ToDQL returns the DQL statements for representing a selection set
-func (selection selectionSet) ToDQL() (query string, args []interface{}, err error) {
+func (node node) ToDQL() (query string, args []interface{}, err error) {
 	writer := bytes.Buffer{}
 
-	if selection.Fields != nil {
-		if err := addPart(selection.Fields, &writer, &args); err != nil {
+	if node.Attributes != nil {
+		if err := addPart(node.Attributes, &writer, &args); err != nil {
 			return "", nil, err
 		}
 	}
 
 	// nested childrenEdges
-	nestedEdges, ok := selection.Edges[selection.ParentName]
+	nestedEdges, ok := node.Edges[node.ParentName]
 
 	if !ok {
 		return writer.String(), args, nil
@@ -43,8 +43,8 @@ func (selection selectionSet) ToDQL() (query string, args []interface{}, err err
 		statements = append(statements, nestedEdge)
 	}
 
-	// add a space if parent fields are present
-	if selection.HasParentFields {
+	// add a space if parent nodeAttributes are present
+	if node.HasParentAttributes {
 		writer.WriteString(" ")
 	}
 
@@ -53,20 +53,28 @@ func (selection selectionSet) ToDQL() (query string, args []interface{}, err err
 	return writer.String(), args, nil
 }
 
-type fields struct {
+type nodeAttributes struct {
 	predicates []interface{}
 }
 
-func Fields(fieldNames ...interface{}) DQLizer {
-	return fields{fieldNames}
+// Select adds nodeAttributes to selection set
+func Select(predicates ...interface{}) DQLizer {
+	return nodeAttributes{predicates}
 }
 
-func (fields fields) ToDQL() (query string, args []interface{}, err error) {
+// Fields alias of Select
+// @Deprecated use Select() instead
+func Fields(predicates ...interface{}) DQLizer {
+	return Select(predicates...)
+}
+
+// ToDQL returns the dql statement for selected nodeAttributes
+func (fields nodeAttributes) ToDQL() (query string, args []interface{}, err error) {
 	var selectedFields []string
 
 	for _, field := range fields.predicates {
 		switch requestField := field.(type) {
-		case computedField:
+		case DQLizer:
 			computedDql, computedArgs, err := requestField.ToDQL()
 
 			if err != nil {
@@ -79,35 +87,46 @@ func (fields fields) ToDQL() (query string, args []interface{}, err error) {
 			fieldString := parseFields(requestField)
 			selectedFields = append(selectedFields, fieldString...)
 		default:
-			return "", nil, fmt.Errorf("fields can only accept strings or computed values, givem %v", requestField)
+			return "", nil, fmt.Errorf("nodeAttributes can only accept strings or Dqlizer, given %v", requestField)
 		}
 	}
 
 	return strings.Join(selectedFields, " "), args, nil
 }
 
-type computedField struct {
+type aliasField struct {
 	alias string
-	value DQLizer
+	value interface{}
 }
 
-func Computed(alias string, predicate DQLizer) DQLizer {
-	return computedField{
+// Alias allows to alias a field
+func Alias(alias string, predicate interface{}) DQLizer {
+	return aliasField{
 		alias: alias,
 		value: predicate,
 	}
 }
 
-func (computedField computedField) ToDQL() (query string, args []interface{}, err error) {
-	computedValue, args, err := computedField.value.ToDQL()
+// ToDQL returns the alias dql statement of a field
+func (aliasField aliasField) ToDQL() (query string, args []interface{}, err error) {
+	var value string
 
-	if err != nil {
-		return "", nil, err
+	switch cast := aliasField.value.(type) {
+	case DQLizer:
+		value, args, err = cast.ToDQL()
+
+		if err != nil {
+			return "", nil, err
+		}
+	case string:
+		value = EscapePredicate(cast)
+	default:
+		return "", nil, fmt.Errorf("alias only accepts  string or DQlizers, given %v", value)
 	}
 
-	predicate := EscapePredicate(Minify(computedField.alias))
+	aliasName := EscapePredicate(aliasField.alias)
 
-	return fmt.Sprintf("%s:%s", predicate, computedValue), args, nil
+	return fmt.Sprintf("%s:%s", aliasName, value), args, nil
 }
 
 func parseFields(fields string) []string {
@@ -122,16 +141,4 @@ func parseFields(fields string) []string {
 		parsedFields = append(parsedFields, escapedField)
 	}
 	return parsedFields
-}
-
-func splitDirective(predicate string) (string, string) {
-	predicateParts := strings.Split(predicate, "@")
-	directive := ""
-
-	if len(predicateParts) > 1 {
-		predicate = predicateParts[0]
-		directive = "@" + strings.Join(predicateParts[1:], "")
-	}
-
-	return predicate, directive
 }

@@ -9,7 +9,7 @@ import (
 type edge struct {
 	Name       string
 	Alias      string
-	Selection  selectionSet
+	Node       node
 	RootFilter DQLizer
 	Filters    []DQLizer
 	Pagination Cursor
@@ -168,7 +168,7 @@ func (edge edge) addFilters(writer *bytes.Buffer, args *[]interface{}) error {
 }
 
 func (edge edge) addSelection(writer *bytes.Buffer, args *[]interface{}) error {
-	return addPart(edge.Selection, writer, args)
+	return addPart(edge.Node, writer, args)
 }
 
 func (edge edge) addGroupBy(writer *bytes.Buffer, args *[]interface{}) error {

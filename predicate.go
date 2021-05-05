@@ -1,6 +1,7 @@
 package dqlx
 
 import (
+	"fmt"
 	"strings"
 )
 
@@ -194,6 +195,77 @@ func (builder *PredicateDateBuilder) IndexDay() *PredicateDateBuilder {
 
 func (builder *PredicateDateBuilder) IndexHour() *PredicateDateBuilder {
 	return builder.Index(TokenizerHour)
+}
+
+// EscapePredicate safely escape a predicate
+// Example: dqlx.EscapePredicate("predicate")
+func EscapePredicate(field string) string {
+	field = Minify(field)
+	field = escapeSpecialChars(field)
+	parts := strings.Fields(field)
+	directive := ""
+	alias := ""
+
+	if len(parts) > 2 {
+		varName := parts[0]
+		asKeyword := strings.ToUpper(parts[1])
+		predicate := strings.Join(parts[2:], "")
+
+		// we must make sure that the keyword passed matches the word "AS"
+		// this way we are not leaking potential injection
+		if asKeyword != "AS" {
+			varName = ""
+			asKeyword = ""
+		}
+
+		predicate, alias, directive = parsePredicate(predicate)
+
+		if alias != "" {
+			alias = fmt.Sprintf("<%s>:", alias)
+		}
+
+		return fmt.Sprintf("%s %s %s<%s>%s", varName, asKeyword, alias, predicate, directive)
+	}
+
+	field, alias, directive = parsePredicate(field)
+
+	if alias != "" {
+		alias = fmt.Sprintf("<%s>:", alias)
+	}
+
+	return fmt.Sprintf("%s<%s>%s", alias, field, directive)
+}
+
+func escapeSpecialChars(predicate string) string {
+	escapeCharacters := []string{"^", "}", "|", "{", "\\", ",", "<", ">", "\""}
+
+	for _, char := range escapeCharacters {
+		predicate = strings.ReplaceAll(predicate, char, "")
+	}
+
+	return predicate
+}
+
+func parsePredicate(predicateName string) (predicate string, alias string, directive string) {
+	predicate = strings.TrimSpace(predicateName)
+
+	// Alias
+	aliasParts := strings.Split(predicateName, ":")
+
+	if len(aliasParts) > 1 {
+		alias = strings.TrimSpace(aliasParts[0])
+		predicateName = strings.Join(aliasParts[1:], "")
+	}
+
+	// Directive
+	predicateParts := strings.Split(predicateName, "@")
+
+	if len(predicateParts) > 1 {
+		predicateName = strings.TrimSpace(predicateParts[0])
+		directive = "@" + strings.Join(predicateParts[1:], "")
+	}
+
+	return predicateName, alias, directive
 }
 
 func isKnownScalarType(value DGraphScalar) bool {

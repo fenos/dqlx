@@ -460,7 +460,7 @@ func Test_Query_GroupBy(t *testing.T) {
 			"netflix_id",
 		).
 		Edge("films", dql.Fields(
-			dql.Computed("total_movies", dql.Val("a")),
+			dql.Alias("total_movies", dql.Val("a")),
 		)).
 		Variable(variable).
 		ToDQL()

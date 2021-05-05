@@ -11,6 +11,8 @@ type queryOperation struct {
 	variables  []edge
 }
 
+// QueriesToDQL returns the DQL statement for 1 or more queries
+// Example: dqlx.QueriesToDQL(query1,query2,query3)
 func QueriesToDQL(queries ...QueryBuilder) (query string, args map[string]string, err error) {
 	mainOperation := queryOperation{}
 	queries = ensureUniqueQueryNames(queries)
@@ -26,6 +28,7 @@ func QueriesToDQL(queries ...QueryBuilder) (query string, args map[string]string
 	return mainOperation.ToDQL()
 }
 
+// ToDQL returns the DQL statement for 1 or more queries
 func (grammar queryOperation) ToDQL() (query string, variables map[string]string, err error) {
 	variables = map[string]string{}
 	blocNames := make([]string, len(grammar.operations))

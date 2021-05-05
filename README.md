@@ -60,16 +60,16 @@ func main() {
     // Query for animals
     _, err = db.
         QueryType("Animal").
-        Filter(
-            dqlx.Eq{"species": "Cat"},
-            dqlx.Lt{"age": 5},
-        ).
-        Fields(`
+        Select(`
             uid
             name
             species
             age
         `).
+        Filter(
+            dqlx.Eq{"species": "Cat"},
+            dqlx.Lt{"age": 5},
+        ).
         UnmarshalInto(&animals).
         Execute(ctx)
 

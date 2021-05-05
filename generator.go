@@ -17,20 +17,16 @@ var typesTmpl string
 
 type templateTypesVariables struct {
 	PackageName string
-	Types       []TemplateDGraphType
+	Types       []templateDGraphType
 	Imports     map[string]bool
 }
 
-// TemplateDGraphType represents a DGraphType definition
-// for templating purpose
-type TemplateDGraphType struct {
+type templateDGraphType struct {
 	Name       string
-	Predicates []TemplateDGraphPredicate
+	Predicates []templateDGraphPredicate
 }
 
-// TemplateDGraphPredicate represents a DGraphPredicate definition
-// for templating purpose
-type TemplateDGraphPredicate struct {
+type templateDGraphPredicate struct {
 	Name     string
 	JsonName string
 	GoType   string
@@ -74,18 +70,18 @@ func GenerateTypes(schema *SchemaBuilder, options GeneratorOption) error {
 	return ioutil.WriteFile(options.Path, formattedCode, fs.ModePerm)
 }
 
-func getTypeDefinition(schema *SchemaBuilder) ([]TemplateDGraphType, map[string]bool) {
-	types := make([]TemplateDGraphType, len(schema.Types))
+func getTypeDefinition(schema *SchemaBuilder) ([]templateDGraphType, map[string]bool) {
+	types := make([]templateDGraphType, len(schema.Types))
 	imports := map[string]bool{}
 
 	for index, dType := range schema.Types {
-		templateType := TemplateDGraphType{
+		templateType := templateDGraphType{
 			Name:       dType.name,
 			Predicates: nil,
 		}
 
 		// Add fields
-		templateType.Predicates = append(templateType.Predicates, TemplateDGraphPredicate{
+		templateType.Predicates = append(templateType.Predicates, templateDGraphPredicate{
 			Name:     "Uid",
 			JsonName: "uid",
 			GoType:   "string",
@@ -109,7 +105,7 @@ func getTypeDefinition(schema *SchemaBuilder) ([]TemplateDGraphType, map[string]
 				fieldName = parts[len(parts)-1]
 			}
 
-			templateType.Predicates = append(templateType.Predicates, TemplateDGraphPredicate{
+			templateType.Predicates = append(templateType.Predicates, templateDGraphPredicate{
 				Name:     toCamelCase(fieldName),
 				JsonName: predicate.Name,
 				GoType:   predicateType,
@@ -118,7 +114,7 @@ func getTypeDefinition(schema *SchemaBuilder) ([]TemplateDGraphType, map[string]
 		}
 
 		// Default DType field
-		templateType.Predicates = append(templateType.Predicates, TemplateDGraphPredicate{
+		templateType.Predicates = append(templateType.Predicates, templateDGraphPredicate{
 			Name:     "DType",
 			JsonName: "dgraph.type",
 			GoType:   "[]string",
