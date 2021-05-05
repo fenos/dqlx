@@ -84,7 +84,7 @@ func (fields nodeAttributes) ToDQL() (query string, args []interface{}, err erro
 			args = append(args, computedArgs)
 			selectedFields = append(selectedFields, computedDql)
 		case string:
-			fieldString := parseFields(requestField)
+			fieldString := parsePredicates(requestField)
 			selectedFields = append(selectedFields, fieldString...)
 		default:
 			return "", nil, fmt.Errorf("nodeAttributes can only accept strings or Dqlizer, given %v", requestField)
@@ -129,9 +129,45 @@ func (aliasField aliasField) ToDQL() (query string, args []interface{}, err erro
 	return fmt.Sprintf("%s:%s", aliasName, value), args, nil
 }
 
-func parseFields(fields string) []string {
+type as struct {
+	variable  string
+	predicate interface{}
+}
+
+// As makes a field a variable
+// Example: dqlx.Query(...).Select(dqlx.As("C", "a"))
+func As(varName string, predicate interface{}) DQLizer {
+	return as{
+		variable:  varName,
+		predicate: predicate,
+	}
+}
+
+// ToDQL returns the dql statement for a field variable
+func (as as) ToDQL() (query string, args []interface{}, err error) {
+	var predicate string
+
+	switch cast := as.predicate.(type) {
+	case DQLizer:
+		predicate, args, err = cast.ToDQL()
+
+		if err != nil {
+			return "", nil, err
+		}
+	case string:
+		predicate = EscapePredicate(cast)
+	default:
+		return "", nil, fmt.Errorf("alias only accepts  string or DQlizers, given %v", predicate)
+	}
+
+	varName := escapeSpecialChars(as.variable)
+
+	return fmt.Sprintf("%s AS %s", varName, predicate), args, nil
+}
+
+func parsePredicates(predicates string) []string {
 	var parsedFields []string
-	fieldsParts := strings.Split(fields, "\n")
+	fieldsParts := strings.Split(predicates, "\n")
 
 	for _, fieldPart := range fieldsParts {
 		if strings.TrimSpace(fieldPart) == "" {

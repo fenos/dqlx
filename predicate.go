@@ -249,20 +249,20 @@ func escapeSpecialChars(predicate string) string {
 func parsePredicate(predicateName string) (predicate string, alias string, directive string) {
 	predicate = strings.TrimSpace(predicateName)
 
-	// Alias
-	aliasParts := strings.Split(predicateName, ":")
-
-	if len(aliasParts) > 1 {
-		alias = strings.TrimSpace(aliasParts[0])
-		predicateName = strings.Join(aliasParts[1:], "")
-	}
-
 	// Directive
 	predicateParts := strings.Split(predicateName, "@")
 
 	if len(predicateParts) > 1 {
 		predicateName = strings.TrimSpace(predicateParts[0])
 		directive = "@" + strings.Join(predicateParts[1:], "")
+	}
+
+	// Alias
+	aliasParts := strings.Split(predicateName, ":")
+
+	if len(aliasParts) > 1 {
+		alias = strings.TrimSpace(aliasParts[0])
+		predicateName = strings.Join(aliasParts[1:], "")
 	}
 
 	return predicateName, alias, directive

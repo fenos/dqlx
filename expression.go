@@ -504,6 +504,12 @@ func Count(predicate string) RawExpression {
 	return Expr(string(countFunc) + "(" + EscapePredicate(predicate) + ")")
 }
 
+// P represent a predicate expression
+// Expression: <predicate>
+func P(predicate string) RawExpression {
+	return Expr(EscapePredicate(predicate))
+}
+
 type between struct {
 	predicate string
 	from      interface{}
