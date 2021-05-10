@@ -1,6 +1,6 @@
 version: 2.1
 orbs:
-  codecov: codecov/codecov@1.0.2
+  coveralls: coveralls/coveralls@1.0.6
 jobs:
   build:
     working_directory: ~/repo
@@ -14,7 +14,10 @@ jobs:
             - go-mod-v4-{{ checksum "go.sum" }}
       - run:
           name: Install Dependencies
-          command: go mod download
+          command: |
+            go mod download
+            go get golang.org/x/tools/cmd/cover
+            go get github.com/mattn/goveralls
       - save_cache:
           key: go-mod-v4-{{ checksum "go.sum" }}
           paths:
@@ -22,9 +25,7 @@ jobs:
       - run:
           name: Run tests
           command: |
-            mkdir -p /tmp/test-reports
-            gotestsum --junitfile /tmp/test-reports/unit-tests.xml
-      - store_test_results:
-          path: /tmp/test-reports
-      - codecov/upload:
-          file: /tmp/test-reports/unit-tests.xml
+            go test -v -covermode=count -coverprofile=coverage.out
+            goveralls -coverprofile=coverage.out -service=circle-ci
+      - coveralls/upload:
+            parallel_finished: true
