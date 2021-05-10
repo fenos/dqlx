@@ -75,7 +75,7 @@ func (suite *QueryIntegrationTest) TestFundamentals() {
 
 		expected := []map[string]interface{}{
 			{
-				"uid":                  "0x100",
+				"uid":                  result[0]["uid"],
 				"name@en":              "Blade Runner",
 				"initial_release_date": "1982-06-25T00:00:00Z",
 				"netflix_id":           "70083726",
@@ -86,10 +86,23 @@ func (suite *QueryIntegrationTest) TestFundamentals() {
 	})
 
 	suite.Run("By Id", func() {
+		var idRecords []map[string]interface{}
+		_, err := suite.db.Query(dqlx.EqFn("name@en", "Blade Runner")).
+			Select(`
+				uid
+				name@en
+				initial_release_date
+				netflix_id
+			`).
+			UnmarshalInto(&idRecords).
+			Execute(ctx)
+
+		require.NoError(suite.T(), err)
+
 		var result []map[string]interface{}
 
-		_, err := suite.db.
-			Query(dqlx.UIDFn("0x100")).
+		_, err = suite.db.
+			Query(dqlx.UIDFn(idRecords[0]["uid"])).
 			Fields(`
 				uid
 				name@en
@@ -99,16 +112,8 @@ func (suite *QueryIntegrationTest) TestFundamentals() {
 			UnmarshalInto(&result).
 			Execute(ctx)
 
-		expected := []map[string]interface{}{
-			{
-				"uid":                  "0x100",
-				"name@en":              "Blade Runner",
-				"initial_release_date": "1982-06-25T00:00:00Z",
-				"netflix_id":           "70083726",
-			},
-		}
 		require.NoError(suite.T(), err)
-		require.ElementsMatch(suite.T(), result, expected)
+		require.ElementsMatch(suite.T(), result, idRecords)
 	})
 
 	suite.Run("Anyofterms", func() {
@@ -117,7 +122,6 @@ func (suite *QueryIntegrationTest) TestFundamentals() {
 		_, err := suite.db.
 			Query(dqlx.AllOfTermsFn("name@en", "Blade Runner")).
 			Fields(`
-				uid
 				name@en
 				initial_release_date
 				netflix_id
@@ -127,7 +131,6 @@ func (suite *QueryIntegrationTest) TestFundamentals() {
 
 		expected := []map[string]interface{}{
 			{
-				"uid":                  "0x100",
 				"name@en":              "Blade Runner",
 				"initial_release_date": "1982-06-25T00:00:00Z",
 				"netflix_id":           "70083726",

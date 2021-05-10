@@ -1,6 +1,5 @@
 [
   {
-    "uid": "0x100",
     "name@en": "Blade Runner",
     "initial_release_date": "1982-06-25T00:00:00Z",
     "netflix_id": "70083726",
@@ -189,7 +188,6 @@
     ]
   },
   {
-    "uid": "0x2",
     "name@en": "Ridley Scott",
     "director.film": [
       {

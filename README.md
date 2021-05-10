@@ -3,6 +3,10 @@
 dqlx is a fully featured [DGraph](https://github.com/dgraph-io/dgraph) Schema and Query Builder for Go.
 It aims to simplify the interaction with the awesome Dgraph database allowing you to fluently compose any queries and mutations of any complexity. It also comes with a rich Schema builder to easily develop and maintain your Dgraph schema.
 
+
+[![CircleCI](https://circleci.com/gh/fenos/dqlx.svg?style=shield)](https://circleci.com/gh/fenos/dqlx)
+[![Coverage Status](https://coveralls.io/repos/github/fenos/dqlx/badge.svg?branch=main)](https://coveralls.io/github/fenos/dqlx?branch=main)
+[![Go Report Card](https://goreportcard.com/badge/github.com/fenos/dqlx)](https://goreportcard.com/report/github.com/fenos/dqlx)
 ---
 
 ### Status
