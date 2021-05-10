@@ -1,6 +1,4 @@
 version: 2.1
-orbs:
-  coveralls: coveralls/coveralls@1.0.6
 jobs:
   build:
     working_directory: ~/repo
@@ -26,6 +24,4 @@ jobs:
           name: Run tests
           command: |
             go test -v -covermode=count -coverprofile=coverage.out
-            goveralls -coverprofile=coverage.out -service=circle-ci -repotoken $COVERALLS_REPO_TOKEN
-      - coveralls/upload:
-            parallel_finished: true
+            goveralls -coverprofile=coverage.out -service=circle-ci -repotoken $COVERALLS_REPO_TOKEN -service_number $CIRCLE_BUILD_NUM
