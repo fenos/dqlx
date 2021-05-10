@@ -191,9 +191,6 @@
     "name@en": "Ridley Scott",
     "director.film": [
       {
-        "uid": "0x1"
-      },
-      {
         "name@en": "Alien",
         "initial_release_date": "1979-05-25T00:00:00Z"
       },
