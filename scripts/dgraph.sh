@@ -5,6 +5,5 @@ docker run -it \
   -p 8080:8080 \
   -p 9080:9080 \
   -p 8000:8000 \
-  -v ~/test:/dgraph \
   --name dgraph \
   dgraph/standalone:v21.03.0

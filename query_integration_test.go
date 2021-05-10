@@ -75,7 +75,7 @@ func (suite *QueryIntegrationTest) TestFundamentals() {
 
 		expected := []map[string]interface{}{
 			{
-				"uid":                  "0x1",
+				"uid":                  "0x100",
 				"name@en":              "Blade Runner",
 				"initial_release_date": "1982-06-25T00:00:00Z",
 				"netflix_id":           "70083726",
@@ -89,7 +89,7 @@ func (suite *QueryIntegrationTest) TestFundamentals() {
 		var result []map[string]interface{}
 
 		_, err := suite.db.
-			Query(dqlx.UIDFn("0x1")).
+			Query(dqlx.UIDFn("0x100")).
 			Fields(`
 				uid
 				name@en
@@ -101,7 +101,7 @@ func (suite *QueryIntegrationTest) TestFundamentals() {
 
 		expected := []map[string]interface{}{
 			{
-				"uid":                  "0x1",
+				"uid":                  "0x100",
 				"name@en":              "Blade Runner",
 				"initial_release_date": "1982-06-25T00:00:00Z",
 				"netflix_id":           "70083726",
@@ -127,7 +127,7 @@ func (suite *QueryIntegrationTest) TestFundamentals() {
 
 		expected := []map[string]interface{}{
 			{
-				"uid":                  "0x1",
+				"uid":                  "0x100",
 				"name@en":              "Blade Runner",
 				"initial_release_date": "1982-06-25T00:00:00Z",
 				"netflix_id":           "70083726",
@@ -180,7 +180,7 @@ func (suite *QueryIntegrationTest) TestFundamentals() {
 
 		require.NoError(suite.T(), err)
 		require.Len(suite.T(), result, 2)
-		require.Len(suite.T(), result[0]["director.film"], 11)
+		require.Len(suite.T(), result[0]["director.film"], 10)
 
 		suite.recordsContainsProperties(result[0]["director.film"].([]interface{}), []string{
 			"name@en",
