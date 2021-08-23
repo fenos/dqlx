@@ -665,7 +665,7 @@ func Test_Cascade(t *testing.T) {
 				<name>
 				<initial_release_date>
 				<netflix_id>
-				<films> @cascade(fields: ["date","id"]) {
+				<films> @cascade(date,id) {
 					<id>
 					<date>
 				}

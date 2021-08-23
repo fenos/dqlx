@@ -729,13 +729,7 @@ func Cascade(fields ...string) DQLizer {
 // ToDQL returns the DQL statement for the 'cascade' expression
 func (cascade cascadeExpr) ToDQL() (query string, args []interface{}, err error) {
 	if len(cascade.fields) > 0 {
-		fields := make([]string, len(cascade.fields))
-
-		for index, field := range cascade.fields {
-			fields[index] = fmt.Sprintf(`"%s"`, field)
-		}
-
-		return fmt.Sprintf("@cascade(fields: [%s])", strings.Join(fields, ",")), nil, nil
+		return fmt.Sprintf("@cascade(%s)", strings.Join(cascade.fields, ",")), nil, nil
 	}
 
 	return "@cascade", nil, nil
