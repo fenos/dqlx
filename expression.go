@@ -717,6 +717,30 @@ func GroupBy(name string) DQLizer {
 	return group{name}
 }
 
+type cascadeExpr struct {
+	fields []string
+}
+
+// Cascade returns an expression for cascade directive
+func Cascade(fields ...string) DQLizer {
+	return cascadeExpr{fields}
+}
+
+// ToDQL returns the DQL statement for the 'cascade' expression
+func (cascade cascadeExpr) ToDQL() (query string, args []interface{}, err error) {
+	if len(cascade.fields) > 0 {
+		fields := make([]string, len(cascade.fields))
+
+		for index, field := range cascade.fields {
+			fields[index] = fmt.Sprintf(`"%s"`, field)
+		}
+
+		return fmt.Sprintf("@cascade(fields: [%s])", strings.Join(fields, ",")), nil, nil
+	}
+
+	return "@cascade", nil, nil
+}
+
 type facetExpr struct {
 	Predicates []interface{}
 }
