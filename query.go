@@ -197,6 +197,13 @@ func (builder QueryBuilder) GroupBy(predicates ...string) QueryBuilder {
 	return builder
 }
 
+// Cascade adds cascade directive
+func (builder QueryBuilder) Cascade(fields ...string) QueryBuilder {
+	builder.rootEdge.Cascade = Cascade(fields...)
+
+	return builder
+}
+
 // Edge adds an edge in the query selection
 // Example1: dqlx.Query(...).Edge("path")
 // Example2: dqlx.Query(...).Edge("parent->child->child")
@@ -217,6 +224,8 @@ func (builder QueryBuilder) Edge(fullPath string, queryParts ...DQLizer) QueryBu
 				builder = builder.GroupBy(cast.Predicate)
 			case facetExpr:
 				builder = builder.Facets(cast.Predicates...)
+			case cascadeExpr:
+				builder = builder.Cascade(cast.fields...)
 			case DQLizer:
 				builder = builder.Filter(cast)
 			}

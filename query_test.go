@@ -641,3 +641,42 @@ func Test_List_function_Query(t *testing.T) {
 
 	require.Equal(t, expected, query)
 }
+
+func Test_Cascade(t *testing.T) {
+	query, variables, err := dql.
+		QueryEdge("bladerunner", dql.EqFn("item", "value")).
+		Fields(`
+			uid
+			name
+			initial_release_date
+			netflix_id
+		`).
+		Cascade().
+		Edge("films", dql.Fields(`
+			id
+			date
+		`), dql.Cascade("date", "id")).
+		ToDQL()
+
+	expected := dql.Minify(`
+		query Bladerunner($0:string) {
+			<bladerunner>(func: eq(<item>,$0)) @cascade {
+				<uid>
+				<name>
+				<initial_release_date>
+				<netflix_id>
+				<films> @cascade(fields: ["date","id"]) {
+					<id>
+					<date>
+				}
+			}
+		}
+	`)
+
+	require.Equal(t, map[string]string{
+		"$0": "value",
+	}, variables)
+
+	require.NoError(t, err)
+	require.Equal(t, expected, query)
+}

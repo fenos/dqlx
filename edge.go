@@ -16,6 +16,7 @@ type edge struct {
 	Order      []DQLizer
 	Group      []DQLizer
 	Facets     []DQLizer
+	Cascade    DQLizer
 	IsRoot     bool
 	IsVariable bool
 }
@@ -122,6 +123,10 @@ func (edge edge) ToDQL() (query string, args []interface{}, err error) {
 		return "", nil, err
 	}
 
+	if err := edge.addCascade(&writer, &args); err != nil {
+		return "", nil, err
+	}
+
 	writer.WriteString(" { ")
 
 	if err := edge.addSelection(&writer, &args); err != nil {
@@ -186,6 +191,22 @@ func (edge edge) addGroupBy(writer *bytes.Buffer, args *[]interface{}) error {
 	writer.WriteString(strings.Join(statements, ","))
 
 	writer.WriteString(")")
+	return nil
+}
+
+func (edge edge) addCascade(writer *bytes.Buffer, args *[]interface{}) error {
+	if edge.Cascade == nil {
+		return nil
+	}
+
+	writer.WriteString(" ")
+
+	var statements []string
+	if err := addStatement([]DQLizer{edge.Cascade}, &statements, args); err != nil {
+		return err
+	}
+
+	writer.WriteString(strings.Join(statements, " "))
 	return nil
 }
 
