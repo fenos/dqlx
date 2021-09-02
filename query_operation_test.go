@@ -54,3 +54,33 @@ func Test_Multiple_Blocks(t *testing.T) {
 
 	require.Equal(t, expected, query)
 }
+
+func TestMultipleQueriesWithSelect(t *testing.T) {
+	q1 := dql.Query(dql.EqFn("id", "id_a")).
+		Select(dql.As("id_a", "id"))
+
+	q2 := dql.Query(dql.EqFn("id", "id_b")).
+		Select(dql.As("id_b", "id"))
+
+	query, variables, err := dql.QueriesToDQL(q1, q2)
+
+	require.NoError(t, err)
+
+	require.Equal(t, map[string]string{
+		"$0": "id_a",
+		"$1": "id_b",
+	}, variables)
+
+	expected := dql.Minify(`
+		query Rootquery_Rootquery_1($0:string, $1:string) { 
+          <rootQuery>(func: eq(<id>,$0)) { 
+            id_a AS <id> 
+          } 
+          <rootQuery_1>(func: eq(<id>,$1)) {
+            id_b AS <id>
+          } 
+        }
+	`)
+
+	require.Equal(t, expected, query)
+}
