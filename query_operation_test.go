@@ -55,7 +55,7 @@ func Test_Multiple_Blocks(t *testing.T) {
 	require.Equal(t, expected, query)
 }
 
-func TestMultipleQueriesWithSelect(t *testing.T) {
+func Test_Multiple_Blocks_With_Select(t *testing.T) {
 	q1 := dql.Query(dql.EqFn("id", "id_a")).
 		Select(dql.As("id_a", "id"))
 
