@@ -81,7 +81,7 @@ func (fields nodeAttributes) ToDQL() (query string, args []interface{}, err erro
 				return "", nil, err
 			}
 
-			args = append(args, computedArgs)
+			args = append(args, computedArgs...)
 			selectedFields = append(selectedFields, computedDql)
 		case string:
 			fieldString := parsePredicates(requestField)
