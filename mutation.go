@@ -43,8 +43,8 @@ func (builder MutationBuilder) Condition(condition DQLizer) MutationBuilder {
 
 // Query assigns a query block for this mutation
 // making it an Upsert
-func (builder MutationBuilder) Query(condition DQLizer) MutationBuilder {
-	builder.condition = condition
+func (builder MutationBuilder) Query(query QueryBuilder) MutationBuilder {
+	builder.query = query
 	return builder
 }
 
