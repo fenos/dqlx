@@ -4,11 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/dgraph-io/dgo/v200"
+
+	dgo "github.com/dgraph-io/dgo/v200"
 	"github.com/dgraph-io/dgo/v200/protos/api"
-	"github.com/mitchellh/mapstructure"
-	"reflect"
-	"time"
 )
 
 // OperationExecutor represents a Dgraph executor for operations
@@ -250,31 +248,16 @@ type Response struct {
 // Unmarshal allows to dynamically marshal the result set of a query
 // into an interface value
 func (response Response) Unmarshal(value interface{}) error {
-	values := map[string]interface{}{}
+	if response.dataKeyPath == "" {
+		return json.Unmarshal(response.Raw.Json, value)
+	}
+
+	values := map[string]json.RawMessage{}
 	err := json.Unmarshal(response.Raw.Json, &values)
 
 	if err != nil {
 		return err
 	}
 
-	decoder, err := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
-		DecodeHook: func(from reflect.Value, to reflect.Value) (interface{}, error) {
-			if _, ok := to.Interface().(time.Time); ok {
-				return time.Parse(time.RFC3339, from.String())
-			}
-			return from.Interface(), nil
-		},
-		Result:  value,
-		TagName: "json",
-	})
-
-	if err != nil {
-		return err
-	}
-
-	if response.dataKeyPath != "" {
-		return decoder.Decode(values[response.dataKeyPath])
-	}
-
-	return decoder.Decode(values)
+	return json.Unmarshal(values[response.dataKeyPath], value)
 }
