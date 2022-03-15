@@ -1,4 +1,4 @@
-module github.com/fenos/dqlx
+module github.com/getplexy/dqlx
 
 go 1.16
 
