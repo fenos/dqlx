@@ -4,11 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/dgraph-io/dgo/v200"
-	"github.com/dgraph-io/dgo/v200/protos/api"
-	"github.com/mitchellh/mapstructure"
 	"reflect"
 	"time"
+
+	"github.com/dgraph-io/dgo/v210"
+	"github.com/dgraph-io/dgo/v210/protos/api"
+	"github.com/mitchellh/mapstructure"
 )
 
 // OperationExecutor represents a Dgraph executor for operations

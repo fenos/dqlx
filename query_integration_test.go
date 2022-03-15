@@ -8,7 +8,7 @@ import (
 
 	"github.com/fenos/dqlx/testdata"
 
-	"github.com/dgraph-io/dgo/v200/protos/api"
+	"github.com/dgraph-io/dgo/v210/protos/api"
 
 	"github.com/fenos/dqlx"
 	"github.com/stretchr/testify/require"
