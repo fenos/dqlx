@@ -3,7 +3,7 @@ package dqlx_test
 import (
 	"testing"
 
-	dql "github.com/fenos/dqlx"
+	dql "github.com/getplexy/dqlx"
 	"github.com/stretchr/testify/require"
 )
 

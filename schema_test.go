@@ -1,9 +1,10 @@
 package dqlx_test
 
 import (
-	dql "github.com/fenos/dqlx"
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	dql "github.com/getplexy/dqlx"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_Schema_ToDQL(t *testing.T) {

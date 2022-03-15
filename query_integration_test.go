@@ -6,11 +6,11 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/fenos/dqlx/testdata"
+	"github.com/getplexy/dqlx/testdata"
 
 	"github.com/dgraph-io/dgo/v210/protos/api"
 
-	"github.com/fenos/dqlx"
+	"github.com/getplexy/dqlx"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
