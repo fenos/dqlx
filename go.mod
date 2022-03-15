@@ -3,7 +3,7 @@ module github.com/fenos/dqlx
 go 1.16
 
 require (
-	github.com/dgraph-io/dgo/v200 v200.0.0-20210401091508-95bfd74de60e
+	github.com/dgraph-io/dgo/v210 v210.0.0-20220113041351-ba0e5dfc4c3e
 	github.com/mitchellh/mapstructure v1.4.1
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/stretchr/testify v1.7.0
