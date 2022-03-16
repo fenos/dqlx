@@ -18,7 +18,7 @@ type KVPair struct {
 
 // QueriesToDQL returns the DQL statement for 1 or more queries
 // Example: dqlx.QueriesToDQL(query1,query2,query3)
-func QueriesToDQL(queries ...QueryBuilder) (query string, args []interface{}, err error) {
+func QueriesToDQL(queries ...QueryBuilder) (query string, args Args, err error) {
 	mainOperation := queryOperation{}
 	queries = ensureUniqueQueryNames(queries)
 

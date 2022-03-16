@@ -88,7 +88,7 @@ func (builder QueryBuilder) Name(name string) QueryBuilder {
 
 // ToDQL returns the current state of the query as DQL string
 // Example: dqlx.Query(...).ToDQL()
-func (builder QueryBuilder) ToDQL() (query string, args []interface{}, err error) {
+func (builder QueryBuilder) ToDQL() (query string, args Args, err error) {
 	return QueriesToDQL(builder)
 }
 

@@ -118,3 +118,15 @@ func (condition mutationCondition) ToDQL() (query string, args Args, err error) 
 
 	return writer.String(), nil, err
 }
+
+func (args Args) ToVariables() map[string]string {
+	variables := make(map[string]string, 0)
+
+	for _, arg := range args {
+		if v, ok := arg.(KVPair); ok {
+			variables[v.K] = v.V
+		}
+	}
+
+	return variables
+}

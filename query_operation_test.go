@@ -34,7 +34,7 @@ func Test_Multiple_Blocks(t *testing.T) {
 		"$1": "value1",
 		"$2": "value",
 		"$3": "value1",
-	}, variables)
+	}, variables.ToVariables())
 
 	expected := dql.Minify(`
 		query Bladerunner_Bladerunner2($0:string, $1:string, $2:string, $3:string) {
@@ -69,7 +69,7 @@ func Test_Multiple_Blocks_With_Select(t *testing.T) {
 	require.Equal(t, map[string]string{
 		"$0": "id_a",
 		"$1": "id_b",
-	}, variables)
+	}, variables.ToVariables())
 
 	expected := dql.Minify(`
 		query Rootquery_Rootquery_1($0:string, $1:string) { 

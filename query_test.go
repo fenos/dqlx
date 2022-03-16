@@ -24,7 +24,7 @@ func Test_Simple_Query(t *testing.T) {
 	require.Equal(t, map[string]string{
 		"$0": "value",
 		"$1": "value1",
-	}, variables)
+	}, variables.ToVariables())
 
 	expected := dql.Minify(`
 		query Bladerunner($0:string, $1:string) {
@@ -71,7 +71,7 @@ func Test_Query_Nested(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, map[string]string{
 		"$0": "Blade Runner",
-	}, variables)
+	}, variables.ToVariables())
 
 	expected := dql.Minify(`
 		query Bladerunner($0:string) {
@@ -138,7 +138,7 @@ func Test_Query_Filter_Nested(t *testing.T) {
 		"$3": "20",
 		"$4": "30",
 		"$5": "3",
-	}, variables)
+	}, variables.ToVariables())
 
 	expected := dql.Minify(`
 		query Bladerunner($0:string, $1:int, $2:int, $3:int, $4:int, $5:int) {
@@ -208,7 +208,7 @@ func Test_Query_Connecting_Filter(t *testing.T) {
 		"$4": "20",
 		"$5": "author4",
 		"$6": "50",
-	}, variables)
+	}, variables.ToVariables())
 
 	expected := dql.Minify(`
 		query Bladerunner($0:string, $1:string, $2:string, $3:string, $4:int, $5:string, $6:int) {
@@ -287,7 +287,7 @@ func Test_Query_Pagination(t *testing.T) {
 		"$8":  "3",
 		"$9":  "45",
 		"$10": "30",
-	}, variables)
+	}, variables.ToVariables())
 
 	expected := dql.Minify(`
 		query Bladerunner($0:string, $1:int, $2:int, $3:string, $4:int, $5:int, $6:string, $7:int, $8:int, $9:string, $10:int) {
@@ -337,7 +337,7 @@ func Test_Query_Variable(t *testing.T) {
 	require.Equal(t, map[string]string{
 		"$0": "test",
 		"$1": "value",
-	}, variables)
+	}, variables.ToVariables())
 
 	expected := dql.Minify(`
 		query Bladerunner($0:string, $1:string) {
@@ -439,7 +439,7 @@ func Test_Query_OrderBy(t *testing.T) {
 	require.Equal(t, map[string]string{
 		"$0": "value",
 		"$1": "10",
-	}, variables)
+	}, variables.ToVariables())
 
 	require.NoError(t, err)
 	require.Equal(t, expected, query)
@@ -488,7 +488,7 @@ func Test_Query_GroupBy(t *testing.T) {
 	require.Equal(t, map[string]string{
 		"$0": "test",
 		"$1": "value",
-	}, variables)
+	}, variables.ToVariables())
 
 	require.NoError(t, err)
 	require.Equal(t, expected, query)
@@ -530,7 +530,7 @@ func Test_Query_Facets(t *testing.T) {
 		"$0": "value",
 		"$1": "true",
 		"$2": "true",
-	}, variables)
+	}, variables.ToVariables())
 
 	require.NoError(t, err)
 	require.Equal(t, expected, query)
@@ -570,7 +570,7 @@ func Test_Query_Edge_From_Query(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, map[string]string{
 		"$0": "Blade Runner",
-	}, variables)
+	}, variables.ToVariables())
 
 	expected := dql.Minify(`
 		query Bladerunner($0:string) {
@@ -626,7 +626,7 @@ func Test_List_function_Query(t *testing.T) {
 		"$1": "value1",
 		"$2": from.Format(time.RFC3339),
 		"$3": to.Format(time.RFC3339),
-	}, variables)
+	}, variables.ToVariables())
 
 	expected := dql.Minify(`
 		query Bladerunner($0:string, $1:string, $2:datetime, $3:datetime) {
@@ -675,7 +675,7 @@ func Test_Cascade(t *testing.T) {
 
 	require.Equal(t, map[string]string{
 		"$0": "value",
-	}, variables)
+	}, variables.ToVariables())
 
 	require.NoError(t, err)
 	require.Equal(t, expected, query)
