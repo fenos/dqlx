@@ -20,11 +20,8 @@ func Test_Multiple_Blocks(t *testing.T) {
 
 	query2 := dql.
 		QueryEdge("bladerunner2", dql.EqFn("item", "value")).
-		Fields(`
-			uid
-			name
-		`).
-		Filter(dql.Eq{"field1": "value1"})
+		Fields("uid", "name").
+		Filter(dql.Eq{"field1": []string{"value1"}})
 
 	query, variables, err := dql.QueriesToDQL(query1, query2)
 
@@ -38,14 +35,14 @@ func Test_Multiple_Blocks(t *testing.T) {
 
 	expected := dql.Minify(`
 		query Bladerunner_Bladerunner2($0:string, $1:string, $2:string, $3:string) {
-			<bladerunner>(func: eq(<item>,$0)) @filter(eq(<field1>,$1)) {
+			<bladerunner>(func: eq(<item>,[$0])) @filter(eq(<field1>,$1)) {
 				<uid>
 				<super_alias>:<name>
 				<initial_release_date>
 				d AS <netflix_id>
 			}
 
-			<bladerunner2>(func: eq(<item>,$2)) @filter(eq(<field1>,$3)) {
+			<bladerunner2>(func: eq(<item>,[$2])) @filter(eq(<field1>,[$3])) {
 				<uid>
 				<name>
 			}
@@ -73,10 +70,10 @@ func Test_Multiple_Blocks_With_Select(t *testing.T) {
 
 	expected := dql.Minify(`
 		query Rootquery_Rootquery_1($0:string, $1:string) { 
-          <rootQuery>(func: eq(<id>,$0)) { 
+          <rootQuery>(func: eq(<id>,[$0])) { 
             id_a AS <id> 
           } 
-          <rootQuery_1>(func: eq(<id>,$1)) {
+          <rootQuery_1>(func: eq(<id>,[$1])) {
             id_b AS <id>
           } 
         }

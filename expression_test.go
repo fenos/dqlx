@@ -20,10 +20,10 @@ func TestEq(t *testing.T) {
 	})
 
 	t.Run("eqFn", func(t *testing.T) {
-		query, args, err := dql.EqFn("field1", "value1").ToDQL()
+		query, args, err := dql.EqFn("field1", "value1", "value2").ToDQL()
 		require.NoError(t, err)
-		require.Equal(t, args, dql.Args{"value1"})
-		require.Equal(t, "eq(<field1>,??)", query)
+		require.Equal(t, args, dql.Args{"value1", "value2"})
+		require.Equal(t, "eq(<field1>,[??,??])", query)
 	})
 }
 

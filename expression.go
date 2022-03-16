@@ -157,9 +157,11 @@ func (eq Eq) ToDQL() (query string, args Args, err error) {
 
 // EqFn represents the eq expression,
 // Expression: eq(predicate, value)
-func EqFn(predicate string, value interface{}) *FilterFn {
+func EqFn(predicate string, value interface{}, values ...interface{}) *FilterFn {
+	valueList := []interface{}{value}
+	valueList = append(valueList, values...)
 	expression := Eq{}
-	expression[predicate] = value
+	expression[predicate] = valueList
 	return &FilterFn{expression}
 }
 

@@ -178,6 +178,7 @@ func (suite *QueryIntegrationTest) TestFundamentals() {
 				name@en
       			initial_release_date
 			`), dqlx.Le{"initial_release_date": "2000"}).
+			Order(dqlx.OrderDesc("name@en")).
 			UnmarshalInto(&result).
 			Execute(ctx)
 

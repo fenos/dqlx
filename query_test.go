@@ -28,7 +28,7 @@ func Test_Simple_Query(t *testing.T) {
 
 	expected := dql.Minify(`
 		query Bladerunner($0:string, $1:string) {
-			<bladerunner>(func: eq(<item>,$0)) @filter(eq(<field1>,$1)) {
+			<bladerunner>(func: eq(<item>,[$0])) @filter(eq(<field1>,$1)) {
 				<uid>
 				<name>
 				<initial_release_date>
@@ -75,7 +75,7 @@ func Test_Query_Nested(t *testing.T) {
 
 	expected := dql.Minify(`
 		query Bladerunner($0:string) {
-			<bladerunner>(func: eq(<name>@en,$0)) {
+			<bladerunner>(func: eq(<name>@en,[$0])) {
 				<uid>
 				<name>
 				<initial_release_date>
@@ -142,7 +142,7 @@ func Test_Query_Filter_Nested(t *testing.T) {
 
 	expected := dql.Minify(`
 		query Bladerunner($0:string, $1:int, $2:int, $3:int, $4:int, $5:int) {
-			<bladerunner>(func: eq(<name>@en,$0)) {
+			<bladerunner>(func: eq(<name>@en,[$0])) {
 				<uid>
 				<name>
 				<initial_release_date>
@@ -212,7 +212,7 @@ func Test_Query_Connecting_Filter(t *testing.T) {
 
 	expected := dql.Minify(`
 		query Bladerunner($0:string, $1:string, $2:string, $3:string, $4:int, $5:string, $6:int) {
-			<bladerunner>(func: eq(<name>@en,$0)) @filter((eq(<name>,$1) OR eq(<name>,$2))) {
+			<bladerunner>(func: eq(<name>@en,[$0])) @filter((eq(<name>,$1) OR eq(<name>,$2))) {
 				<uid>
 				<name>
 				<initial_release_date>
@@ -291,7 +291,7 @@ func Test_Query_Pagination(t *testing.T) {
 
 	expected := dql.Minify(`
 		query Bladerunner($0:string, $1:int, $2:int, $3:string, $4:int, $5:int, $6:string, $7:int, $8:int, $9:string, $10:int) {
-			<bladerunner>(func: eq(<name>@en,$0),first:$1,offset:$2,after:$3) {
+			<bladerunner>(func: eq(<name>@en,[$0]),first:$1,offset:$2,after:$3) {
 				<uid>
 				<name>
 				<initial_release_date>
@@ -341,7 +341,7 @@ func Test_Query_Variable(t *testing.T) {
 
 	expected := dql.Minify(`
 		query Bladerunner($0:string, $1:string) {
-			var(func: eq(<name>,$0)) {
+			var(func: eq(<name>,[$0])) {
 				<film> {
 					<performance> {
 					 	D AS <genre>
@@ -349,7 +349,7 @@ func Test_Query_Variable(t *testing.T) {
 				}
 			}
 
-			<bladerunner>(func: eq(<item>,$1)) @filter(eq(<field1>,D)) {
+			<bladerunner>(func: eq(<item>,[$1])) @filter(eq(<field1>,D)) {
 				<uid>
 				<name>
 				<initial_release_date>
@@ -383,7 +383,7 @@ func Test_Query_Value_Variable(t *testing.T) {
 
 	expected := dql.Minify(`
 		query Bladerunner($0:string, $1:string) {
-			var(func: eq(<name>,$0)) {
+			var(func: eq(<name>,[$0])) {
 				<film> {
 					<performance> { 
 						D AS <genre>
@@ -391,7 +391,7 @@ func Test_Query_Value_Variable(t *testing.T) {
 				}
 			}
 
-			<bladerunner>(func: eq(<item>,$1)) @filter(uid(val(<D>)) AND uid(<D>)) {
+			<bladerunner>(func: eq(<item>,[$1])) @filter(uid(val(<D>)) AND uid(<D>)) {
 				<uid>
 				<name>
 				<initial_release_date>
@@ -423,7 +423,7 @@ func Test_Query_OrderBy(t *testing.T) {
 
 	expected := dql.Minify(`
 		query Bladerunner($0:string, $1:int) {
-			<bladerunner>(func: eq(<item>,$0),orderasc:<name>,orderdesc:val(<initial_release_date>)) {
+			<bladerunner>(func: eq(<item>,[$0]),orderasc:<name>,orderdesc:val(<initial_release_date>)) {
 				<uid>
 				<name>
 				<initial_release_date>
@@ -467,13 +467,13 @@ func Test_Query_GroupBy(t *testing.T) {
 
 	expected := dql.Minify(`
 		query Bladerunner($0:string, $1:string) {
-			var(func: eq(<name>,$0)) {
+			var(func: eq(<name>,[$0])) {
 				<film> @groupby(<genre>) {
 					a AS <genre>
 				}
 			}
 
-			<bladerunner>(func: eq(<item>,$1)) {
+			<bladerunner>(func: eq(<item>,[$1])) {
 				<uid>
 				<name>
 				<initial_release_date>
@@ -514,7 +514,7 @@ func Test_Query_Facets(t *testing.T) {
 
 	expected := dql.Minify(`
 		query Bladerunner($0:string, $1:bool, $2:bool) {
-			<bladerunner>(func: eq(<item>,$0)) @facets {
+			<bladerunner>(func: eq(<item>,[$0])) @facets {
 				<uid>
 				<name>
 				<initial_release_date>
@@ -574,7 +574,7 @@ func Test_Query_Edge_From_Query(t *testing.T) {
 
 	expected := dql.Minify(`
 		query Bladerunner($0:string) {
-			<bladerunner>(func: eq(<name>@en,$0)) {
+			<bladerunner>(func: eq(<name>@en,[$0])) {
 				<uid>
 				<name>
 				<initial_release_date>
@@ -660,7 +660,7 @@ func Test_Cascade(t *testing.T) {
 
 	expected := dql.Minify(`
 		query Bladerunner($0:string) {
-			<bladerunner>(func: eq(<item>,$0)) @cascade {
+			<bladerunner>(func: eq(<item>,[$0])) @cascade {
 				<uid>
 				<name>
 				<initial_release_date>
