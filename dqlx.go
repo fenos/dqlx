@@ -11,9 +11,11 @@ import (
 var symbolValuePlaceholder = "??"
 var symbolEdgeTraversal = "->"
 
+type Args []interface{}
+
 // DQLizer implementors are able to define a custom dql statement
 type DQLizer interface {
-	ToDQL() (query string, args []interface{}, err error)
+	ToDQL() (query string, args Args, err error)
 }
 
 // Executor implementors are able to define a custom way

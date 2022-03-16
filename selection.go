@@ -14,7 +14,7 @@ type node struct {
 }
 
 // ToDQL returns the DQL statements for representing a selection set
-func (node node) ToDQL() (query string, args []interface{}, err error) {
+func (node node) ToDQL() (query string, args Args, err error) {
 	writer := bytes.Buffer{}
 
 	if node.Attributes != nil {
@@ -69,7 +69,7 @@ func Fields(predicates ...interface{}) DQLizer {
 }
 
 // ToDQL returns the dql statement for selected nodeAttributes
-func (fields nodeAttributes) ToDQL() (query string, args []interface{}, err error) {
+func (fields nodeAttributes) ToDQL() (query string, args Args, err error) {
 	var selectedFields []string
 
 	for _, field := range fields.predicates {
@@ -108,7 +108,7 @@ func Alias(alias string, predicate interface{}) DQLizer {
 }
 
 // ToDQL returns the alias dql statement of a field
-func (aliasField aliasField) ToDQL() (query string, args []interface{}, err error) {
+func (aliasField aliasField) ToDQL() (query string, args Args, err error) {
 	var value string
 
 	switch cast := aliasField.value.(type) {
@@ -144,7 +144,7 @@ func As(varName string, predicate interface{}) DQLizer {
 }
 
 // ToDQL returns the dql statement for a field variable
-func (as as) ToDQL() (query string, args []interface{}, err error) {
+func (as as) ToDQL() (query string, args Args, err error) {
 	var predicate string
 
 	switch cast := as.predicate.(type) {

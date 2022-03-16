@@ -34,7 +34,7 @@ func (edge edge) GetName() string {
 	return edge.RelativeName()
 }
 
-func (edge edge) ToDQL() (query string, args []interface{}, err error) {
+func (edge edge) ToDQL() (query string, args Args, err error) {
 	writer := bytes.Buffer{}
 	edgeName := edge.RelativeName()
 
@@ -138,7 +138,7 @@ func (edge edge) ToDQL() (query string, args []interface{}, err error) {
 	return writer.String(), args, nil
 }
 
-func (edge edge) addFacets(writer *bytes.Buffer, args *[]interface{}) error {
+func (edge edge) addFacets(writer *bytes.Buffer, args *Args) error {
 	if len(edge.Facets) == 0 {
 		return nil
 	}
@@ -154,7 +154,7 @@ func (edge edge) addFacets(writer *bytes.Buffer, args *[]interface{}) error {
 	return nil
 }
 
-func (edge edge) addFilters(writer *bytes.Buffer, args *[]interface{}) error {
+func (edge edge) addFilters(writer *bytes.Buffer, args *Args) error {
 	if len(edge.Filters) == 0 {
 		return nil
 	}
@@ -172,11 +172,11 @@ func (edge edge) addFilters(writer *bytes.Buffer, args *[]interface{}) error {
 	return nil
 }
 
-func (edge edge) addSelection(writer *bytes.Buffer, args *[]interface{}) error {
+func (edge edge) addSelection(writer *bytes.Buffer, args *Args) error {
 	return addPart(edge.Node, writer, args)
 }
 
-func (edge edge) addGroupBy(writer *bytes.Buffer, args *[]interface{}) error {
+func (edge edge) addGroupBy(writer *bytes.Buffer, args *Args) error {
 	if len(edge.Group) == 0 {
 		return nil
 	}
@@ -194,7 +194,7 @@ func (edge edge) addGroupBy(writer *bytes.Buffer, args *[]interface{}) error {
 	return nil
 }
 
-func (edge edge) addCascade(writer *bytes.Buffer, args *[]interface{}) error {
+func (edge edge) addCascade(writer *bytes.Buffer, args *Args) error {
 	if edge.Cascade == nil {
 		return nil
 	}

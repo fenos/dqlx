@@ -11,9 +11,14 @@ type queryOperation struct {
 	variables  []edge
 }
 
+type KVPair struct {
+	K string
+	V string
+}
+
 // QueriesToDQL returns the DQL statement for 1 or more queries
 // Example: dqlx.QueriesToDQL(query1,query2,query3)
-func QueriesToDQL(queries ...QueryBuilder) (query string, args map[string]string, err error) {
+func QueriesToDQL(queries ...QueryBuilder) (query string, args []interface{}, err error) {
 	mainOperation := queryOperation{}
 	queries = ensureUniqueQueryNames(queries)
 
@@ -29,8 +34,8 @@ func QueriesToDQL(queries ...QueryBuilder) (query string, args map[string]string
 }
 
 // ToDQL returns the DQL statement for 1 or more queries
-func (grammar queryOperation) ToDQL() (query string, variables map[string]string, err error) {
-	variables = map[string]string{}
+func (grammar queryOperation) ToDQL() (query string, variables Args, err error) {
+	variables = []interface{}{}
 	blocNames := make([]string, len(grammar.operations))
 
 	for index, block := range grammar.operations {
@@ -39,7 +44,7 @@ func (grammar queryOperation) ToDQL() (query string, variables map[string]string
 
 	queryName := strings.Join(blocNames, "_")
 
-	var args []interface{}
+	var args Args
 	var statements []string
 
 	if err := addOperation(grammar.variables, &statements, &args); err != nil {
@@ -81,7 +86,7 @@ func ensureUniqueQueryNames(queries []QueryBuilder) []QueryBuilder {
 	return uniqueQueries
 }
 
-func addOperation(operations []edge, statements *[]string, args *[]interface{}) error {
+func addOperation(operations []edge, statements *[]string, args *Args) error {
 	parts := make([]DQLizer, len(operations))
 
 	for index, operation := range operations {

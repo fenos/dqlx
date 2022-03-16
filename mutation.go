@@ -94,7 +94,7 @@ func Condition(filters ...DQLizer) DQLizer {
 }
 
 // ToDQL returns a DQL statement for a mutation condition
-func (condition mutationCondition) ToDQL() (query string, args []interface{}, err error) {
+func (condition mutationCondition) ToDQL() (query string, args Args, err error) {
 	writer := bytes.Buffer{}
 	writer.WriteString(" @if(")
 

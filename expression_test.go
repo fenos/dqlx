@@ -15,14 +15,14 @@ func TestEq(t *testing.T) {
 		}.ToDQL()
 
 		require.NoError(t, err)
-		require.Equal(t, []interface{}{"value1", "value2"}, args)
+		require.Equal(t, dql.Args{"value1", "value2"}, args)
 		require.Equal(t, "eq(<field1>,??) AND eq(<field2>,??)", query)
 	})
 
 	t.Run("eqFn", func(t *testing.T) {
 		query, args, err := dql.EqFn("field1", "value1").ToDQL()
 		require.NoError(t, err)
-		require.Equal(t, args, []interface{}{"value1"})
+		require.Equal(t, args, dql.Args{"value1"})
 		require.Equal(t, "eq(<field1>,??)", query)
 	})
 }
@@ -35,14 +35,14 @@ func TestLe(t *testing.T) {
 		}.ToDQL()
 
 		require.NoError(t, err)
-		require.Equal(t, []interface{}{"value1", "value2"}, args)
+		require.Equal(t, dql.Args{"value1", "value2"}, args)
 		require.Equal(t, "le(<field1>,??) AND le(<field2>,??)", query)
 	})
 
 	t.Run("leFn", func(t *testing.T) {
 		query, args, err := dql.LeFn("field1", "value1").ToDQL()
 		require.NoError(t, err)
-		require.Equal(t, args, []interface{}{"value1"})
+		require.Equal(t, args, dql.Args{"value1"})
 		require.Equal(t, "le(<field1>,??)", query)
 	})
 }
@@ -55,14 +55,14 @@ func TestLt(t *testing.T) {
 		}.ToDQL()
 
 		require.NoError(t, err)
-		require.Equal(t, []interface{}{"value1", "value2"}, args)
+		require.Equal(t, dql.Args{"value1", "value2"}, args)
 		require.Equal(t, "lt(<field1>,??) AND lt(<field2>,??)", query)
 	})
 
 	t.Run("ltFn", func(t *testing.T) {
 		query, args, err := dql.LtFn("field1", "value1").ToDQL()
 		require.NoError(t, err)
-		require.Equal(t, args, []interface{}{"value1"})
+		require.Equal(t, args, dql.Args{"value1"})
 		require.Equal(t, "lt(<field1>,??)", query)
 	})
 }
@@ -75,14 +75,14 @@ func TestGe(t *testing.T) {
 		}.ToDQL()
 
 		require.NoError(t, err)
-		require.Equal(t, []interface{}{"value1", "value2"}, args)
+		require.Equal(t, dql.Args{"value1", "value2"}, args)
 		require.Equal(t, "ge(<field1>,??) AND ge(<field2>,??)", query)
 	})
 
 	t.Run("geFn", func(t *testing.T) {
 		query, args, err := dql.GeFn("field1", "value1").ToDQL()
 		require.NoError(t, err)
-		require.Equal(t, args, []interface{}{"value1"})
+		require.Equal(t, args, dql.Args{"value1"})
 		require.Equal(t, "ge(<field1>,??)", query)
 	})
 }
@@ -95,14 +95,14 @@ func TestGt(t *testing.T) {
 		}.ToDQL()
 
 		require.NoError(t, err)
-		require.Equal(t, []interface{}{"value1", "value2"}, args)
+		require.Equal(t, dql.Args{"value1", "value2"}, args)
 		require.Equal(t, "gt(<field1>,??) AND gt(<field2>,??)", query)
 	})
 
 	t.Run("gtFn", func(t *testing.T) {
 		query, args, err := dql.GtFn("field1", "value1").ToDQL()
 		require.NoError(t, err)
-		require.Equal(t, []interface{}{"value1"}, args)
+		require.Equal(t, dql.Args{"value1"}, args)
 		require.Equal(t, "gt(<field1>,??)", query)
 	})
 }
@@ -133,14 +133,14 @@ func TestAllOfTerms(t *testing.T) {
 		}.ToDQL()
 
 		require.NoError(t, err)
-		require.Equal(t, []interface{}{"value1", "value2"}, args)
+		require.Equal(t, dql.Args{"value1", "value2"}, args)
 		require.Equal(t, "allofterms(<field1>,??) AND allofterms(<field2>,??)", query)
 	})
 
 	t.Run("allOfTermsFn", func(t *testing.T) {
 		query, args, err := dql.AllOfTermsFn("field1", "value1").ToDQL()
 		require.NoError(t, err)
-		require.Equal(t, []interface{}{"value1"}, args)
+		require.Equal(t, dql.Args{"value1"}, args)
 		require.Equal(t, "allofterms(<field1>,??)", query)
 	})
 }
@@ -153,14 +153,14 @@ func TestAnyOfTerms(t *testing.T) {
 		}.ToDQL()
 
 		require.NoError(t, err)
-		require.Equal(t, []interface{}{"value1", "value2"}, args)
+		require.Equal(t, dql.Args{"value1", "value2"}, args)
 		require.Equal(t, "anyofterms(<field1>,??) AND anyofterms(<field2>,??)", query)
 	})
 
 	t.Run("anyOfTermsFn", func(t *testing.T) {
 		query, args, err := dql.AnyOfTermsFn("field1", "value1").ToDQL()
 		require.NoError(t, err)
-		require.Equal(t, []interface{}{"value1"}, args)
+		require.Equal(t, dql.Args{"value1"}, args)
 		require.Equal(t, "anyofterms(<field1>,??)", query)
 	})
 }
@@ -193,14 +193,14 @@ func TestMatch(t *testing.T) {
 		}.ToDQL()
 
 		require.NoError(t, err)
-		require.Equal(t, []interface{}{"value1", "value2"}, args)
+		require.Equal(t, dql.Args{"value1", "value2"}, args)
 		require.Equal(t, "match(<field1>,??) AND match(<field2>,??)", query)
 	})
 
 	t.Run("matchFn", func(t *testing.T) {
 		query, args, err := dql.MatchFn("field1", "value1").ToDQL()
 		require.NoError(t, err)
-		require.Equal(t, []interface{}{"value1"}, args)
+		require.Equal(t, dql.Args{"value1"}, args)
 		require.Equal(t, "match(<field1>,??)", query)
 	})
 }
@@ -213,14 +213,14 @@ func TestAllOfText(t *testing.T) {
 		}.ToDQL()
 
 		require.NoError(t, err)
-		require.Equal(t, []interface{}{"value1", "value2"}, args)
+		require.Equal(t, dql.Args{"value1", "value2"}, args)
 		require.Equal(t, "alloftext(<field1>,??) AND alloftext(<field2>,??)", query)
 	})
 
 	t.Run("allOfTextFn", func(t *testing.T) {
 		query, args, err := dql.AllOfTextFn("field1", "value1").ToDQL()
 		require.NoError(t, err)
-		require.Equal(t, []interface{}{"value1"}, args)
+		require.Equal(t, dql.Args{"value1"}, args)
 		require.Equal(t, "alloftext(<field1>,??)", query)
 	})
 }
@@ -233,14 +233,14 @@ func TestAnyOfText(t *testing.T) {
 		}.ToDQL()
 
 		require.NoError(t, err)
-		require.Equal(t, []interface{}{"value1", "value2"}, args)
+		require.Equal(t, dql.Args{"value1", "value2"}, args)
 		require.Equal(t, "anyoftext(<field1>,??) AND anyoftext(<field2>,??)", query)
 	})
 
 	t.Run("anyOfTextFn", func(t *testing.T) {
 		query, args, err := dql.AnyOfTextFn("field1", "value1").ToDQL()
 		require.NoError(t, err)
-		require.Equal(t, []interface{}{"value1"}, args)
+		require.Equal(t, dql.Args{"value1"}, args)
 		require.Equal(t, "anyoftext(<field1>,??)", query)
 	})
 }
@@ -253,14 +253,14 @@ func TestExact(t *testing.T) {
 		}.ToDQL()
 
 		require.NoError(t, err)
-		require.Equal(t, []interface{}{"value1", "value2"}, args)
+		require.Equal(t, dql.Args{"value1", "value2"}, args)
 		require.Equal(t, "exact(<field1>,??) AND exact(<field2>,??)", query)
 	})
 
 	t.Run("exactFn", func(t *testing.T) {
 		query, args, err := dql.ExactFn("field1", "value1").ToDQL()
 		require.NoError(t, err)
-		require.Equal(t, []interface{}{"value1"}, args)
+		require.Equal(t, dql.Args{"value1"}, args)
 		require.Equal(t, "exact(<field1>,??)", query)
 	})
 }
@@ -273,14 +273,14 @@ func TestTerm(t *testing.T) {
 		}.ToDQL()
 
 		require.NoError(t, err)
-		require.Equal(t, []interface{}{"value1", "value2"}, args)
+		require.Equal(t, dql.Args{"value1", "value2"}, args)
 		require.Equal(t, "term(<field1>,??) AND term(<field2>,??)", query)
 	})
 
 	t.Run("termFn", func(t *testing.T) {
 		query, args, err := dql.TermFn("field1", "value1").ToDQL()
 		require.NoError(t, err)
-		require.Equal(t, []interface{}{"value1"}, args)
+		require.Equal(t, dql.Args{"value1"}, args)
 		require.Equal(t, "term(<field1>,??)", query)
 	})
 }
@@ -293,14 +293,14 @@ func TestFullText(t *testing.T) {
 		}.ToDQL()
 
 		require.NoError(t, err)
-		require.Equal(t, []interface{}{"value1", "value2"}, args)
+		require.Equal(t, dql.Args{"value1", "value2"}, args)
 		require.Equal(t, "fulltext(<field1>,??) AND fulltext(<field2>,??)", query)
 	})
 
 	t.Run("fulltextFn", func(t *testing.T) {
 		query, args, err := dql.FullTextFn("field1", "value1").ToDQL()
 		require.NoError(t, err)
-		require.Equal(t, []interface{}{"value1"}, args)
+		require.Equal(t, dql.Args{"value1"}, args)
 		require.Equal(t, "fulltext(<field1>,??)", query)
 	})
 }
@@ -333,7 +333,7 @@ func TestCount(t *testing.T) {
 func TestBetween(t *testing.T) {
 	query, args, err := dql.Between("field1", 1, 10).ToDQL()
 	require.NoError(t, err)
-	require.Equal(t, []interface{}{1, 10}, args)
+	require.Equal(t, dql.Args{1, 10}, args)
 	require.Equal(t, "between(<field1>,??,??)", query)
 }
 
@@ -352,7 +352,7 @@ func TestVal(t *testing.T) {
 func TestUID(t *testing.T) {
 	query, args, err := dql.UID("field1").ToDQL()
 	require.NoError(t, err)
-	require.Equal(t, []interface{}{"field1"}, args)
+	require.Equal(t, dql.Args{"field1"}, args)
 	require.Equal(t, "uid(??)", query)
 }
 
@@ -364,14 +364,14 @@ func TestUIDIn(t *testing.T) {
 		}.ToDQL()
 
 		require.NoError(t, err)
-		require.Equal(t, []interface{}{"value1", "value2"}, args)
+		require.Equal(t, dql.Args{"value1", "value2"}, args)
 		require.Equal(t, "uid_in(<field1>,??) AND uid_in(<field2>,??)", query)
 	})
 
 	t.Run("uuidFn", func(t *testing.T) {
 		query, args, err := dql.UIDInFn("field1", "value").ToDQL()
 		require.NoError(t, err)
-		require.Equal(t, []interface{}{"value"}, args)
+		require.Equal(t, dql.Args{"value"}, args)
 		require.Equal(t, "uid_in(<field1>,??)", query)
 	})
 }

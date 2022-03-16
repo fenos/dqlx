@@ -80,7 +80,14 @@ func (executor OperationExecutor) ExecuteQueries(ctx context.Context, queries ..
 
 	defer tx.Discard(ctx)
 
-	resp, err := tx.QueryWithVars(ctx, query, variables)
+	kvVariables := make(map[string]string, 0)
+	for _, v := range variables {
+		if kvp, ok := v.(KVPair); ok {
+			kvVariables[kvp.K] = kvp.V
+		}
+	}
+
+	resp, err := tx.QueryWithVars(ctx, query, kvVariables)
 	if err != nil {
 		return nil, err
 	}
@@ -142,9 +149,16 @@ func (executor OperationExecutor) ExecuteMutations(ctx context.Context, mutation
 		variables = nil
 	}
 
+	vars := make(map[string]string, 0)
+	for _, v := range variables {
+		if kvp, ok := v.(KVPair); ok {
+			vars[kvp.K] = kvp.V
+		}
+	}
+
 	request := &api.Request{
 		Query:      query,
-		Vars:       variables,
+		Vars:       vars,
 		ReadOnly:   executor.readOnly,
 		BestEffort: executor.bestEffort,
 		Mutations:  mutationRequests,

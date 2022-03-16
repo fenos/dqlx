@@ -8,8 +8,9 @@ import (
 	"time"
 )
 
-func toVariables(rawVariables map[int]interface{}) (variables map[string]string, placeholders []string) {
-	variables = map[string]string{}
+func toVariables(rawVariables map[int]interface{}) (variables []interface{}, placeholders []string) {
+	variables = []interface{}{}
+	kvPairs := make(map[string]string, 0)
 	placeholders = make([]string, len(rawVariables))
 
 	queryPlaceholderNames := getSortedVariables(rawVariables)
@@ -18,8 +19,12 @@ func toVariables(rawVariables map[int]interface{}) (variables map[string]string,
 	for index, placeholderName := range queryPlaceholderNames {
 		variableName := fmt.Sprintf("$%d", placeholderName)
 
-		variables[variableName] = toVariableValue(rawVariables[index])
+		kvPairs[variableName] = toVariableValue(rawVariables[index])
 		placeholders[index] = fmt.Sprintf("$%d:%s", placeholderName, goTypeToDQLType(rawVariables[placeholderName]))
+	}
+
+	for k, v := range kvPairs {
+		variables = append(variables, KVPair{k, v})
 	}
 
 	return variables, placeholders
@@ -70,7 +75,7 @@ func dqlTypeToGoType(value DGraphScalar) string {
 	return string(value)
 }
 
-func replacePlaceholders(query string, args []interface{}, transform func(index int, value interface{}) string) (string, map[int]interface{}) {
+func replacePlaceholders(query string, args Args, transform func(index int, value interface{}) string) (string, map[int]interface{}) {
 	variables := map[int]interface{}{}
 	buf := &bytes.Buffer{}
 	i := 0
@@ -101,7 +106,7 @@ func isListType(val interface{}) bool {
 	return valVal.Kind() == reflect.Array || valVal.Kind() == reflect.Slice
 }
 
-func addStatement(parts []DQLizer, statements *[]string, args *[]interface{}) error {
+func addStatement(parts []DQLizer, statements *[]string, args *Args) error {
 	for _, block := range parts {
 		statement, queryArg, err := block.ToDQL()
 
@@ -116,7 +121,7 @@ func addStatement(parts []DQLizer, statements *[]string, args *[]interface{}) er
 	return nil
 }
 
-func addPart(part DQLizer, writer *bytes.Buffer, args *[]interface{}) error {
+func addPart(part DQLizer, writer *bytes.Buffer, args *Args) error {
 	statement, statementArgs, err := part.ToDQL()
 	*args = append(*args, statementArgs...)
 

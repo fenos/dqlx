@@ -47,7 +47,7 @@ type filterExpr struct {
 	value    interface{}
 }
 
-func (filter filterExpr) ToDQL() (query string, args []interface{}, err error) {
+func (filter filterExpr) ToDQL() (query string, args Args, err error) {
 	var placeholder string
 
 	switch castValue := filter.value.(type) {
@@ -78,7 +78,7 @@ func (filter filterExpr) ToDQL() (query string, args []interface{}, err error) {
 
 type filterKV map[string]interface{}
 
-func (filter filterKV) toDQL(funcType FuncType) (query string, args []interface{}, err error) {
+func (filter filterKV) toDQL(funcType FuncType) (query string, args Args, err error) {
 	var expressions []string
 	sortedKeys := getSortedKeys(filter)
 
@@ -110,7 +110,7 @@ type And conjunction
 
 type conjunction []DQLizer
 
-func (connector conjunction) join(separator string) (query string, args []interface{}, err error) {
+func (connector conjunction) join(separator string) (query string, args Args, err error) {
 	if len(connector) == 0 {
 		return "", []interface{}{}, nil
 	}
@@ -133,12 +133,12 @@ func (connector conjunction) join(separator string) (query string, args []interf
 }
 
 // ToDQL returns the DQL statement for the 'or' expression
-func (or Or) ToDQL() (query string, args []interface{}, err error) {
+func (or Or) ToDQL() (query string, args Args, err error) {
 	return conjunction(or).join(" OR ")
 }
 
 // ToDQL returns the DQL statement for the 'and' expression
-func (and And) ToDQL() (query string, args []interface{}, err error) {
+func (and And) ToDQL() (query string, args Args, err error) {
 	return conjunction(and).join(" AND ")
 }
 
@@ -148,7 +148,7 @@ func (and And) ToDQL() (query string, args []interface{}, err error) {
 type Eq filterKV
 
 // ToDQL returns the DQL statement for the 'eq' expression
-func (eq Eq) ToDQL() (query string, args []interface{}, err error) {
+func (eq Eq) ToDQL() (query string, args Args, err error) {
 	return filterExpr{
 		funcType: eqFunc,
 		value:    filterKV(eq),
@@ -169,7 +169,7 @@ func EqFn(predicate string, value interface{}) *FilterFn {
 type Le filterKV
 
 // ToDQL returns the DQL statement for the 'le' expression
-func (le Le) ToDQL() (query string, args []interface{}, err error) {
+func (le Le) ToDQL() (query string, args Args, err error) {
 	return filterExpr{
 		funcType: leFunc,
 		value:    filterKV(le),
@@ -190,7 +190,7 @@ func LeFn(predicate string, value interface{}) *FilterFn {
 type Lt filterKV
 
 // ToDQL returns the DQL statement for the 'lt' expression
-func (lt Lt) ToDQL() (query string, args []interface{}, err error) {
+func (lt Lt) ToDQL() (query string, args Args, err error) {
 	return filterExpr{
 		funcType: ltFunc,
 		value:    filterKV(lt),
@@ -211,7 +211,7 @@ func LtFn(predicate string, value interface{}) *FilterFn {
 type Ge filterKV
 
 // ToDQL returns the DQL statement for the 'ge' expression
-func (ge Ge) ToDQL() (query string, args []interface{}, err error) {
+func (ge Ge) ToDQL() (query string, args Args, err error) {
 	return filterExpr{
 		funcType: geFunc,
 		value:    filterKV(ge),
@@ -232,7 +232,7 @@ func GeFn(predicate string, value interface{}) *FilterFn {
 type Gt filterKV
 
 // ToDQL returns the DQL statement for the 'gt' expression
-func (gt Gt) ToDQL() (query string, args []interface{}, err error) {
+func (gt Gt) ToDQL() (query string, args Args, err error) {
 	return filterExpr{
 		funcType: gtFunc,
 		value:    filterKV(gt),
@@ -285,7 +285,7 @@ func Type(predicate string) DQLizer {
 type AllOfTerms filterKV
 
 // ToDQL returns the DQL statement for the 'allofterms' expression
-func (allOfTerms AllOfTerms) ToDQL() (query string, args []interface{}, err error) {
+func (allOfTerms AllOfTerms) ToDQL() (query string, args Args, err error) {
 	return filterExpr{
 		funcType: alloftermsFunc,
 		value:    filterKV(allOfTerms),
@@ -306,7 +306,7 @@ func AllOfTermsFn(predicate string, value interface{}) *FilterFn {
 type AnyOfTerms filterKV
 
 // ToDQL returns the DQL statement for the 'anyofterms' expression
-func (anyOfTerms AnyOfTerms) ToDQL() (query string, args []interface{}, err error) {
+func (anyOfTerms AnyOfTerms) ToDQL() (query string, args Args, err error) {
 	return filterExpr{
 		funcType: anyoftermsFunc,
 		value:    filterKV(anyOfTerms),
@@ -327,7 +327,7 @@ func AnyOfTermsFn(predicate string, value interface{}) *FilterFn {
 type Regexp map[string]string
 
 // ToDQL returns the DQL statement for the 'regexp' expression
-func (regexp Regexp) ToDQL() (query string, args []interface{}, err error) {
+func (regexp Regexp) ToDQL() (query string, args Args, err error) {
 	// Value can't be escaped
 	rawRegexp := filterKV{}
 	for key, value := range regexp {
@@ -354,7 +354,7 @@ func RegexpFn(predicate string, pattern string) *FilterFn {
 type Match filterKV
 
 // ToDQL returns the DQL statement for the 'match' expression
-func (match Match) ToDQL() (query string, args []interface{}, err error) {
+func (match Match) ToDQL() (query string, args Args, err error) {
 	return filterExpr{
 		funcType: matchFunc,
 		value:    filterKV(match),
@@ -375,7 +375,7 @@ func MatchFn(predicate string, pattern string) *FilterFn {
 type AllOfText filterKV
 
 // ToDQL returns the DQL statement for the 'alloftext' expression
-func (alloftext AllOfText) ToDQL() (query string, args []interface{}, err error) {
+func (alloftext AllOfText) ToDQL() (query string, args Args, err error) {
 	return filterExpr{
 		funcType: alloftextFunc,
 		value:    filterKV(alloftext),
@@ -396,7 +396,7 @@ func AllOfTextFn(predicate string, pattern string) *FilterFn {
 type AnyOfText filterKV
 
 // ToDQL returns the DQL statement for the 'anyoftext' expression
-func (anyoftext AnyOfText) ToDQL() (query string, args []interface{}, err error) {
+func (anyoftext AnyOfText) ToDQL() (query string, args Args, err error) {
 	return filterExpr{
 		funcType: anyoftextFunc,
 		value:    filterKV(anyoftext),
@@ -417,7 +417,7 @@ func AnyOfTextFn(predicate string, pattern string) *FilterFn {
 type Exact filterKV
 
 // ToDQL returns the DQL statement for the 'exact' expression
-func (exact Exact) ToDQL() (query string, args []interface{}, err error) {
+func (exact Exact) ToDQL() (query string, args Args, err error) {
 	return filterExpr{
 		funcType: exactFunc,
 		value:    filterKV(exact),
@@ -438,7 +438,7 @@ func ExactFn(predicate string, pattern string) *FilterFn {
 type Term filterKV
 
 // ToDQL returns the DQL statement for the 'term' expression
-func (term Term) ToDQL() (query string, args []interface{}, err error) {
+func (term Term) ToDQL() (query string, args Args, err error) {
 	return filterExpr{
 		funcType: termFunc,
 		value:    filterKV(term),
@@ -459,7 +459,7 @@ func TermFn(predicate string, pattern string) *FilterFn {
 type FullText filterKV
 
 // ToDQL returns the DQL statement for the 'fulltext' expression
-func (fulltext FullText) ToDQL() (query string, args []interface{}, err error) {
+func (fulltext FullText) ToDQL() (query string, args Args, err error) {
 	return filterExpr{
 		funcType: fulltextFunc,
 		value:    filterKV(fulltext),
@@ -527,7 +527,7 @@ func Between(predicate string, from interface{}, to interface{}) DQLizer {
 }
 
 // ToDQL returns the DQL statement for the 'between' expression
-func (between between) ToDQL() (query string, args []interface{}, err error) {
+func (between between) ToDQL() (query string, args Args, err error) {
 	placeholderFrom, argsFrom, err := parseValue(between.from)
 
 	if err != nil {
@@ -554,7 +554,7 @@ type RawExpression struct {
 }
 
 // ToDQL returns the DQL statement for a RawExpression expression, use with care
-func (rawExpression RawExpression) ToDQL() (query string, args []interface{}, err error) {
+func (rawExpression RawExpression) ToDQL() (query string, args Args, err error) {
 	return rawExpression.Val, nil, nil
 }
 
@@ -598,7 +598,7 @@ func UIDFn(value interface{}) *FilterFn {
 type UIDIn filterKV
 
 // ToDQL returns the DQL statement for the 'uid_in' expression
-func (uidin UIDIn) ToDQL() (query string, args []interface{}, err error) {
+func (uidin UIDIn) ToDQL() (query string, args Args, err error) {
 	return filterExpr{
 		funcType: uidInFunc,
 		value:    filterKV(uidin),
@@ -626,7 +626,7 @@ func (p Cursor) WantsPagination() bool {
 }
 
 // ToDQL returns the DQL statement for the 'pagination' expression
-func (p Cursor) ToDQL() (query string, args []interface{}, err error) {
+func (p Cursor) ToDQL() (query string, args Args, err error) {
 	var paginationExpressions []string
 	if p.First != 0 {
 		paginationExpressions = append(paginationExpressions, "first:??")
@@ -676,7 +676,7 @@ func OrderDesc(predicate interface{}) DQLizer {
 }
 
 // ToDQL returns the DQL statement for the 'order' expression
-func (orderBy orderBy) ToDQL() (query string, args []interface{}, err error) {
+func (orderBy orderBy) ToDQL() (query string, args Args, err error) {
 	predicate := orderBy.Predicate
 
 	switch val := orderBy.Predicate.(type) {
@@ -707,7 +707,7 @@ type group struct {
 }
 
 // ToDQL returns the DQL statement for the 'group' expression
-func (group group) ToDQL() (query string, args []interface{}, err error) {
+func (group group) ToDQL() (query string, args Args, err error) {
 	query = EscapePredicate(group.Predicate)
 	return
 }
@@ -727,7 +727,7 @@ func Cascade(fields ...string) DQLizer {
 }
 
 // ToDQL returns the DQL statement for the 'cascade' expression
-func (cascade cascadeExpr) ToDQL() (query string, args []interface{}, err error) {
+func (cascade cascadeExpr) ToDQL() (query string, args Args, err error) {
 	if len(cascade.fields) > 0 {
 		return fmt.Sprintf("@cascade(%s)", strings.Join(cascade.fields, ",")), nil, nil
 	}
@@ -740,7 +740,7 @@ type facetExpr struct {
 }
 
 // ToDQL returns the DQL statement for the 'facets' expression
-func (facet facetExpr) ToDQL() (query string, args []interface{}, err error) {
+func (facet facetExpr) ToDQL() (query string, args Args, err error) {
 	var predicates []string
 	for _, predicate := range facet.Predicates {
 
@@ -771,7 +771,7 @@ func Facets(predicates ...interface{}) DQLizer {
 	return facetExpr{Predicates: predicates}
 }
 
-func parseValue(value interface{}) (valuePlaceholder string, args []interface{}, err error) {
+func parseValue(value interface{}) (valuePlaceholder string, args Args, err error) {
 	if isListType(value) {
 		var listValue []interface{}
 
