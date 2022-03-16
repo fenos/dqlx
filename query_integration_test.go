@@ -183,7 +183,10 @@ func (suite *QueryIntegrationTest) TestFundamentals() {
 
 		require.NoError(suite.T(), err)
 		require.Len(suite.T(), result, 2)
-		require.Len(suite.T(), result[1]["director.film"], 10)
+		require.Contains(suite.T(), result[0], "director.film")
+		if filmDirector, ok := result[1]["director.film"]; ok {
+			require.Len(suite.T(), filmDirector, 10)
+		}
 
 		suite.recordsContainsProperties(result[0]["director.film"].([]interface{}), []string{
 			"name@en",
