@@ -233,6 +233,9 @@ func EscapePredicate(field string) string {
 		alias = fmt.Sprintf("<%s>:", alias)
 	}
 
+	if strings.HasPrefix(field, "expand(") {
+		return fmt.Sprintf("%s%s%s", alias, field, directive)
+	}
 	return fmt.Sprintf("%s<%s>%s", alias, field, directive)
 }
 

@@ -43,7 +43,11 @@ func (edge edge) ToDQL() (query string, args []interface{}, err error) {
 	} else {
 		if !(edge.IsRoot && edge.IsVariable) {
 			if edgeName != "" {
-				writer.WriteString(fmt.Sprintf("<%s>", edgeName))
+				if strings.HasPrefix(edgeName, "expand(") {
+					writer.WriteString(edgeName)
+				} else {
+					writer.WriteString(fmt.Sprintf("<%s>", edgeName))
+				}
 			}
 		}
 	}
