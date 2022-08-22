@@ -204,12 +204,22 @@ func (builder QueryBuilder) Cascade(fields ...string) QueryBuilder {
 	return builder
 }
 
-// Edge adds an edge in the query selection
-// Example1: dqlx.Query(...).Edge("path")
-// Example2: dqlx.Query(...).Edge("parent->child->child")
-// Example3: dqlx.Query(...).Edge("parent->child->child", dqlx.Select(""))
+// Edge adds an edge in the query selection.
+//
+// Examples:
+//   dqlx.Query(...).Edge("path")
+//   dqlx.Query(...).Edge("parent->child->child")
+//   dqlx.Query(...).Edge("parent->child->child", dqlx.Select(""))
 func (builder QueryBuilder) Edge(fullPath string, queryParts ...DQLizer) QueryBuilder {
-	return builder.EdgeFn(fullPath, func(builder QueryBuilder) QueryBuilder {
+	return builder.EdgeAs("", fullPath, queryParts...)
+}
+
+// EdgeAs adds an aliased edge in the query selection.
+//
+// Example:
+//   dqlx.Query(...).EdgeAs("C", "path", ...)
+func (builder QueryBuilder) EdgeAs(as string, fullPath string, queryParts ...DQLizer) QueryBuilder {
+	return builder.EdgeFnAs(as, fullPath, func(builder QueryBuilder) QueryBuilder {
 		for _, part := range queryParts {
 			switch cast := part.(type) {
 			case filterExpr:
@@ -234,31 +244,53 @@ func (builder QueryBuilder) Edge(fullPath string, queryParts ...DQLizer) QueryBu
 	})
 }
 
-// EdgePath allows to defined an edge using the slice syntax for the path
-// Example:    dqlx.Query(...).Edge([]string{"parent", "child", "child")
-// Equivalent: dqlx.Query(...).Edge("parent->child->child")
+// EdgePath adds an edge in the query selection. Slice syntax is used to define
+// the path.
+//
+// Example:
+//   dqlx.Query(...).EdgePath([]string{"parent", "child", "child")
+//   dqlx.Query(...).Edge("parent->child->child") // equivalent
 func (builder QueryBuilder) EdgePath(fullPath []string, queryParts ...DQLizer) QueryBuilder {
 	return builder.Edge(EdgePath(fullPath...), queryParts...)
 }
 
-// EdgeAs adds a new aliased edge
-// Example: dqlx.Query(...).EdgeAs("C", "path", ...)
-func (builder QueryBuilder) EdgeAs(as string, fullPath string, queryParts ...DQLizer) QueryBuilder {
-	return builder.Edge(fullPath, queryParts...).As(as)
+// EdgePathAs adds an aliased edge in the query selection. Slice syntax is used
+// to define the path.
+//
+// Example:
+//   dqlx.Query(...).EdgePathAs([]string{"parent", "child", "child")
+//   dqlx.Query(...).EdgeAs("parent->child->child") // equivalent
+func (builder QueryBuilder) EdgePathAs(as string, fullPath []string, queryParts ...DQLizer) QueryBuilder {
+	return builder.EdgeAs(as, EdgePath(fullPath...), queryParts...)
 }
 
-// EdgeFn allows to build an edge with a callback and query methods
-// Example: dqlx.Query(...).EdgeFn("path", func(builder QueryBuilder) {
-//  return builder.Select(...).Filter(...)
-//})
+// EdgeFn adds an edge in the query selection with a callback and query methods.
+//
+// Example:
+//   dqlx.Query(...).EdgeFn("path", func(builder QueryBuilder) {
+//     return builder.Select(...).Filter(...)
+//   })
 func (builder QueryBuilder) EdgeFn(fullPath string, fn func(builder QueryBuilder) QueryBuilder) QueryBuilder {
-	return builder.addEdgeFn(QueryEdge(fullPath, nil), fn)
+	return builder.addEdgeFn("", QueryEdge(fullPath, nil), fn)
 }
 
-// EdgeFromQuery allows to add an external constructed edge to the query
-// Example: dqlx.Query(...).EdgeFromQuery(dqlx.Query(...))
+// EdgeFnAs adds an aliased edge in the query selection with a callback and
+// query methods.
+//
+// Example:
+//   dqlx.Query(...).EdgeFn("path", func(builder QueryBuilder) {
+//     return builder.Select(...).Filter(...)
+//   })
+func (builder QueryBuilder) EdgeFnAs(as string, fullPath string, fn func(builder QueryBuilder) QueryBuilder) QueryBuilder {
+	return builder.addEdgeFn(as, QueryEdge(fullPath, nil), fn)
+}
+
+// EdgeFromQuery adds an external constructed edge to the query.
+//
+// Example:
+//   dqlx.Query(...).EdgeFromQuery(dqlx.Query(...))
 func (builder QueryBuilder) EdgeFromQuery(edge QueryBuilder) QueryBuilder {
-	return builder.addEdgeFn(edge, nil)
+	return builder.addEdgeFn("", edge, nil)
 }
 
 // UnmarshalInto requests to unmarshal the result set into this specific interface{}
@@ -292,7 +324,7 @@ func (builder QueryBuilder) GetName() string {
 	return builder.rootEdge.Name
 }
 
-func (builder QueryBuilder) addEdgeFn(query QueryBuilder, fn func(builder QueryBuilder) QueryBuilder) QueryBuilder {
+func (builder QueryBuilder) addEdgeFn(as string, query QueryBuilder, fn func(builder QueryBuilder) QueryBuilder) QueryBuilder {
 	edgePathParts := ParseEdge(query.rootEdge.Name)
 
 	if len(edgePathParts) == 0 {
@@ -316,6 +348,10 @@ func (builder QueryBuilder) addEdgeFn(query QueryBuilder, fn func(builder QueryB
 
 	if fn != nil {
 		edgeBuilder = fn(edgeBuilder)
+	}
+
+	if as != "" {
+		edgeBuilder = edgeBuilder.As(as)
 	}
 
 	builder.childrenEdges[parentPath] = append(builder.childrenEdges[parentPath], edgeBuilder)
