@@ -78,7 +78,7 @@ func Variable(rootQueryFn *FilterFn) QueryBuilder {
 // As sets an alias for the edge.
 //
 // Example:
-//   dqlx.Query(...).As("C") // -> { C AS rootQuery(func: ...) { ... } }
+//   dqlx.Query(...).As("C") // -> { C as rootQuery(func: ...) { ... } }
 func (builder QueryBuilder) As(name string) QueryBuilder {
 	builder.rootEdge.Alias = name
 	return builder

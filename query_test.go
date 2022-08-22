@@ -318,7 +318,7 @@ func Test_Query_Variable(t *testing.T) {
 	variable := dql.Variable(dql.EqFn("name", "test")).
 		Edge("film").
 		Edge("film->performance", dql.Fields(`
-			 D AS genre
+			 D as genre
 		`))
 
 	query, variables, err := dql.
@@ -344,7 +344,7 @@ func Test_Query_Variable(t *testing.T) {
 			var(func: eq(<name>,$0)) {
 				<film> {
 					<performance> {
-					 	D AS <genre>
+					 	D as <genre>
 					}
 				}
 			}
@@ -365,7 +365,7 @@ func Test_Query_Value_Variable(t *testing.T) {
 	variable := dql.Variable(dql.EqFn("name", "test")).
 		Edge("film").
 		Edge("film->performance", dql.Fields(`
-			 D AS genre
+			 D as genre
 		`))
 
 	query, _, err := dql.
@@ -386,7 +386,7 @@ func Test_Query_Value_Variable(t *testing.T) {
 			var(func: eq(<name>,$0)) {
 				<film> {
 					<performance> { 
-						D AS <genre>
+						D as <genre>
 					}
 				}
 			}
@@ -448,7 +448,7 @@ func Test_Query_OrderBy(t *testing.T) {
 func Test_Query_GroupBy(t *testing.T) {
 	variable := dql.Variable(dql.EqFn("name", "test")).
 		Edge("film", dql.Fields(`
-			 a AS genre
+			 a as genre
 		`), dql.GroupBy("genre"))
 
 	query, variables, err := dql.
@@ -469,7 +469,7 @@ func Test_Query_GroupBy(t *testing.T) {
 		query Bladerunner($0:string, $1:string) {
 			var(func: eq(<name>,$0)) {
 				<film> @groupby(<genre>) {
-					a AS <genre>
+					a as <genre>
 				}
 			}
 

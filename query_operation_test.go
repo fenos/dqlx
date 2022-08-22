@@ -14,7 +14,7 @@ func Test_Multiple_Blocks(t *testing.T) {
 			uid
 			super_alias:name
 			initial_release_date
-			d AS netflix_id
+			d as netflix_id
 		`).
 		Filter(dql.Eq{"field1": "value1"})
 
@@ -42,7 +42,7 @@ func Test_Multiple_Blocks(t *testing.T) {
 				<uid>
 				<super_alias>:<name>
 				<initial_release_date>
-				d AS <netflix_id>
+				d as <netflix_id>
 			}
 
 			<bladerunner2>(func: eq(<item>,$2)) @filter(eq(<field1>,$3)) {
@@ -74,10 +74,10 @@ func Test_Multiple_Blocks_With_Select(t *testing.T) {
 	expected := dql.Minify(`
 		query Rootquery_Rootquery_1($0:string, $1:string) { 
           <rootQuery>(func: eq(<id>,$0)) { 
-            id_a AS <id> 
+            id_a as <id> 
           } 
           <rootQuery_1>(func: eq(<id>,$1)) {
-            id_b AS <id>
+            id_b as <id>
           } 
         }
 	`)
