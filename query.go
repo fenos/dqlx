@@ -7,8 +7,8 @@ import (
 	"github.com/dgraph-io/dgo/v200"
 )
 
-// QueryBuilder represents the public API for building
-// a secure dynamic Dgraph query
+// QueryBuilder represents the public API for building a secure dynamic Dgraph
+// query.
 type QueryBuilder struct {
 	rootEdge      edge
 	variables     []QueryBuilder
@@ -18,9 +18,10 @@ type QueryBuilder struct {
 	client *dgo.Dgraph
 }
 
-// Query initialises the query builder
-// with the provided root filter
-// example: dqlx.Query(dqlx.EqFn(..,..))
+// Query initializes the query builder with the provided root filter.
+//
+// example:
+//   dqlx.Query(dqlx.EqFn(..,..))
 func Query(rootQueryFn *FilterFn) QueryBuilder {
 	var rootFilter DQLizer
 
@@ -46,67 +47,79 @@ func Query(rootQueryFn *FilterFn) QueryBuilder {
 	return builder
 }
 
-// QueryType alias to initialise a query with
-// the root function type()
-// Example: dqlx.QueryType("User")
-// Equivalent of: dqlx.Query(dqlx.TypeFn("User"))
+// QueryType alias to initialize a query with the root function type()
+//
+// Example:
+//   dqlx.QueryType("User")
+//   dqlx.Query(dqlx.TypeFn("User")) // equivalent
 func QueryType(typeName string) QueryBuilder {
 	return Query(TypeFn(typeName))
 }
 
-// QueryEdge initialise a query builder with a specific name for
-// the edge. Useful for reusable edges
-// Example: dqlx.QueryEdge("name", dqlx.EqFn(..,..))
+// QueryEdge initialize a query builder with a specific name for the edge.
+// Useful for reusable edges.
+//
+// Example:
+//   dqlx.QueryEdge("name", dqlx.EqFn(..,..))
 func QueryEdge(edgeName string, rootQueryFn *FilterFn) QueryBuilder {
 	return Query(rootQueryFn).Name(edgeName)
 }
 
-// Variable initialise a variable query builder
-// Example: dqlx.Variable(dqlx.EqFn(..,..))
+// Variable initializes a variable query builder.
+//
+// Example:
+//   dqlx.Variable(dqlx.EqFn(..,..))
 func Variable(rootQueryFn *FilterFn) QueryBuilder {
 	query := Query(rootQueryFn)
 	query.rootEdge.IsVariable = true
 	return query
 }
 
-// As sets an alias for the edge
-// Example: dqlx.Query(...).As("C")
-// DQL: { C AS rootQuery(func: ...) { ... } }
+// As sets an alias for the edge.
+//
+// Example:
+//   dqlx.Query(...).As("C") // -> { C AS rootQuery(func: ...) { ... } }
 func (builder QueryBuilder) As(name string) QueryBuilder {
 	builder.rootEdge.Alias = name
 	return builder
 }
 
-// Name sets the name of the edge
-// Exaple: dqlx.Query(...).Name("bladerunner")
-// DQL: { bladerunner(func: ...) { ... }
+// Name sets the name of the edge.
+//
+// Example:
+//   dqlx.Query(...).Name("bladerunner") // -> { bladerunner(func: ...) { ... }
 func (builder QueryBuilder) Name(name string) QueryBuilder {
 	builder.rootEdge.Name = name
 	builder.rootEdge.Node.ParentName = name
 	return builder
 }
 
-// ToDQL returns the current state of the query as DQL string
-// Example: dqlx.Query(...).ToDQL()
+// ToDQL returns the current state of the query as a DQL string.
+//
+// Example:
+//   dqlx.Query(...).ToDQL()
 func (builder QueryBuilder) ToDQL() (query string, args map[string]string, err error) {
 	return QueriesToDQL(builder)
 }
 
 // Variable registers a variable within the query
-// Example: dqlx.Query(...).Variable(variable)
+//
+// Example:
+//   dqlx.Query(...).Variable(variable)
 func (builder QueryBuilder) Variable(queryBuilder QueryBuilder) QueryBuilder {
 	builder.variables = append(builder.variables, queryBuilder)
 	return builder
 }
 
-// Select assigns predicates to the selection set
-// Example1: dqlx.Query(...).Select(`
-// 	field1
-//	field2
-//	field3
-//`)
+// Select assigns predicates to the selection set.
 //
-// Example2: dqlx.Query(...).Select("field1", "field2", "field3")
+// Examples:
+//   dqlx.Query(...).Select(`
+//     field1
+//     field2
+//     field3
+//   `)
+//   dqlx.Query(...).Select("field1", "field2", "field3")
 func (builder QueryBuilder) Select(predicates ...interface{}) QueryBuilder {
 	if len(predicates) == 0 {
 		return builder
@@ -133,8 +146,10 @@ func (builder QueryBuilder) Fields(predicates ...interface{}) QueryBuilder {
 }
 
 // Facets requests facets for the current query
-// Example1: dqlx.Query(...).Facets("field1")
-// Example2: dqlx.Query(...).Facets(dqlx.Eq{"field1": "value"})
+//
+// Examples:
+//   dqlx.Query(...).Facets("field1")
+//   dqlx.Query(...).Facets(dqlx.Eq{"field1": "value"})
 func (builder QueryBuilder) Facets(predicates ...interface{}) QueryBuilder {
 	builder.rootEdge.Facets = append(builder.rootEdge.Facets, facetExpr{
 		Predicates: predicates,
@@ -144,16 +159,20 @@ func (builder QueryBuilder) Facets(predicates ...interface{}) QueryBuilder {
 }
 
 // Order requests an ordering for the result set
-// Example1: dqlx.Query(...).Order(dqlx.OrderAsc("field1"))
-// Example2: dqlx.Query(...).Order(dqlx.OrderDesc("field2"))
+//
+// Examples:
+//   dqlx.Query(...).Order(dqlx.OrderAsc("field1"))
+//   dqlx.Query(...).Order(dqlx.OrderDesc("field2"))
 func (builder QueryBuilder) Order(order DQLizer) QueryBuilder {
 	builder.rootEdge.Order = append(builder.rootEdge.Order, order)
 	return builder
 }
 
 // OrderAsc alias for ordering in ascending order
-// Example:    dqlx.Query(...).OrderAsc("field1")
-// Equivalent: dqlx.Query(...).Order(dqlx.OrderAsc("field1"))
+//
+// Example:
+//   dqlx.Query(...).OrderAsc("field1")
+//   dqlx.Query(...).Order(dqlx.OrderAsc("field1")) // equivalent
 func (builder QueryBuilder) OrderAsc(predicate interface{}) QueryBuilder {
 	builder.rootEdge.Order = append(builder.rootEdge.Order, orderBy{
 		Direction: OrderDirectionAsc,
@@ -163,8 +182,10 @@ func (builder QueryBuilder) OrderAsc(predicate interface{}) QueryBuilder {
 }
 
 // OrderDesc alias for ordering in descending order
-// Example:    dqlx.Query(...).OrderDesc("field1")
-// Equivalent: dqlx.Query(...).Order(dqlx.OrderDesc("field1"))
+//
+// Example:
+//   dqlx.Query(...).OrderDesc("field1")
+//   dqlx.Query(...).Order(dqlx.OrderDesc("field1")) // equivalent
 func (builder QueryBuilder) OrderDesc(predicate interface{}) QueryBuilder {
 	builder.rootEdge.Order = append(builder.rootEdge.Order, orderBy{
 		Direction: OrderDirectionDesc,
@@ -174,7 +195,9 @@ func (builder QueryBuilder) OrderDesc(predicate interface{}) QueryBuilder {
 }
 
 // Filter requests filters for this query
-// Example: dqlx.Query(...).Filter(dqlx.Eq{...}, dqlx.Gt{...})
+//
+// Example:
+//   dqlx.Query(...).Filter(dqlx.Eq{...}, dqlx.Gt{...})
 func (builder QueryBuilder) Filter(filters ...DQLizer) QueryBuilder {
 	for _, filter := range filters {
 		builder.rootEdge.Filters = append(builder.rootEdge.Filters, filter)
@@ -183,13 +206,15 @@ func (builder QueryBuilder) Filter(filters ...DQLizer) QueryBuilder {
 }
 
 // Paginate requests paginated results
-// Example: dqlx.Query(...).Paginate(dqlx.Cursor{...})
+//
+// Example:
+//   dqlx.Query(...).Paginate(dqlx.Cursor{...})
 func (builder QueryBuilder) Paginate(pagination Cursor) QueryBuilder {
 	builder.rootEdge.Pagination = pagination
 	return builder
 }
 
-// GroupBy requests group by
+// GroupBy adds a groupby directive.
 func (builder QueryBuilder) GroupBy(predicates ...string) QueryBuilder {
 	for _, field := range predicates {
 		builder.rootEdge.Group = append(builder.rootEdge.Group, GroupBy(field))
@@ -197,7 +222,7 @@ func (builder QueryBuilder) GroupBy(predicates ...string) QueryBuilder {
 	return builder
 }
 
-// Cascade adds cascade directive
+// Cascade adds a cascade directive.
 func (builder QueryBuilder) Cascade(fields ...string) QueryBuilder {
 	builder.rootEdge.Cascade = Cascade(fields...)
 
@@ -293,23 +318,30 @@ func (builder QueryBuilder) EdgeFromQuery(edge QueryBuilder) QueryBuilder {
 	return builder.addEdgeFn("", edge, nil)
 }
 
-// UnmarshalInto requests to unmarshal the result set into this specific interface{}
-// Example: dqlx.Query(...).UnmarshalInto(&value)+
+// UnmarshalInto requests to unmarshal the result set into this specific
+// interface{}.
+//
+// Example:
+//   dqlx.Query(...).UnmarshalInto(&value)+
 func (builder QueryBuilder) UnmarshalInto(value interface{}) QueryBuilder {
 	builder.unmarshalInto = value
 	return builder
 }
 
-// WithDClient allows to swap the underline dgo.Dgraph client
-// Example: dqlx.Query(...).WithDClient(dgoClient)
+// WithDClient allows to swap the underline dgo.Dgraph client.
+//
+// Example:
+//   dqlx.Query(...).WithDClient(dgoClient)
 func (builder QueryBuilder) WithDClient(client *dgo.Dgraph) QueryBuilder {
 	builder.client = client
 	return builder
 }
 
-// Execute executes the current state of the query sending the operation
-// to dgraph
-// Example: dqlx.Query(...).Execute(ctx, ...)
+// Execute executes the current state of the query and thereby sends the
+// operation to DGraph.
+//
+// Example:
+//   dqlx.Query(...).Execute(ctx, ...)
 func (builder QueryBuilder) Execute(ctx context.Context, options ...OperationExecutorOptionFn) (*Response, error) {
 	executor := NewDGoExecutor(builder.client)
 
@@ -319,7 +351,7 @@ func (builder QueryBuilder) Execute(ctx context.Context, options ...OperationExe
 	return executor.ExecuteQueries(ctx, builder)
 }
 
-// GetName returns the name of the query edge
+// GetName returns the name of the query edge.
 func (builder QueryBuilder) GetName() string {
 	return builder.rootEdge.Name
 }
@@ -359,7 +391,7 @@ func (builder QueryBuilder) addEdgeFn(as string, query QueryBuilder, fn func(bui
 	return builder
 }
 
-// IsEmptyQuery determine if a given query is an empty generated query
+// IsEmptyQuery indicates if a given query is an empty generated query.
 func IsEmptyQuery(query string) bool {
 	return "query () {  {  } }" == query
 }
