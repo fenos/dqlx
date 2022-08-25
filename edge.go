@@ -39,7 +39,7 @@ func (edge edge) ToDQL() (query string, args []interface{}, err error) {
 	edgeName := edge.RelativeName()
 
 	if edge.Alias != "" {
-		writer.WriteString(fmt.Sprintf("%s as", edge.Alias))
+		writer.WriteString(fmt.Sprintf("%s as ", edge.Alias))
 	} else {
 		if !(edge.IsRoot && edge.IsVariable) {
 			if edgeName != "" {

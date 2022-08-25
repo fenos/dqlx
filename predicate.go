@@ -208,12 +208,12 @@ func EscapePredicate(field string) string {
 
 	if len(parts) > 2 {
 		varName := parts[0]
-		asKeyword := strings.ToUpper(parts[1])
+		asKeyword := strings.ToLower(parts[1])
 		predicate := strings.Join(parts[2:], "")
 
-		// we must make sure that the keyword passed matches the word "AS"
+		// we must make sure that the keyword passed matches the word "as"
 		// this way we are not leaking potential injection
-		if asKeyword != "AS" {
+		if asKeyword != "as" {
 			varName = ""
 			asKeyword = ""
 		}

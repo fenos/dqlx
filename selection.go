@@ -162,7 +162,7 @@ func (as as) ToDQL() (query string, args []interface{}, err error) {
 
 	varName := escapeSpecialChars(as.variable)
 
-	return fmt.Sprintf("%s AS %s", varName, predicate), args, nil
+	return fmt.Sprintf("%s as %s", varName, predicate), args, nil
 }
 
 func parsePredicates(predicates string) []string {
