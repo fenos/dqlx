@@ -3,8 +3,9 @@ package dqlx
 import (
 	"bytes"
 	"context"
-	"github.com/dgraph-io/dgo/v200"
 	"strings"
+
+	"github.com/dgraph-io/dgo/v210"
 )
 
 // MutationBuilder used to construct mutations
