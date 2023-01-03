@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/dgraph-io/dgo/v210"
+	"github.com/dgraph-io/dgo/v200"
 )
 
 // SchemaBuilder used to compose a Dgraph schema in a fluent manner

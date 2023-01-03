@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 
-	dgo "github.com/dgraph-io/dgo/v210"
-	"github.com/dgraph-io/dgo/v210/protos/api"
+	dgo "github.com/dgraph-io/dgo/v200"
+	"github.com/dgraph-io/dgo/v200/protos/api"
 )
 
 // OperationExecutor represents a Dgraph executor for operations
