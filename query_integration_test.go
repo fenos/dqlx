@@ -8,7 +8,7 @@ import (
 
 	"github.com/fenos/dqlx/testdata"
 
-	"github.com/dgraph-io/dgo/v210/protos/api"
+	"github.com/dgraph-io/dgo/v200/protos/api"
 
 	"github.com/fenos/dqlx"
 	"github.com/stretchr/testify/require"
@@ -183,26 +183,14 @@ func (suite *QueryIntegrationTest) TestFundamentals() {
 
 		require.NoError(suite.T(), err)
 		require.Len(suite.T(), result, 2)
+		require.Len(suite.T(), result[0]["director.film"], 10)
 
-		var filmDirectors interface{}
-		var other interface{}
-		for _, v := range result {
-			if r, ok := v["director.film"]; ok {
-				filmDirectors = r
-			} else {
-				other = v
-			}
-		}
-
-		require.Len(suite.T(), filmDirectors, 10)
-		require.NotEmpty(suite.T(), other)
-
-		suite.recordsContainsProperties(filmDirectors, []string{
+		suite.recordsContainsProperties(result[0]["director.film"].([]interface{}), []string{
 			"name@en",
 			"initial_release_date",
 		})
 
-		require.NotContains(suite.T(), other, "director.film")
+		require.NotContains(suite.T(), result[1], "director.film")
 	})
 
 	suite.Run("Language support", func() {
